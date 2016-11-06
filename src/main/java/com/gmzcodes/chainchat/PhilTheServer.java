@@ -235,19 +235,36 @@ public class PhilTheServer extends AbstractVerticle {
             .createHttpServer()
             .websocketHandler(new Handler<ServerWebSocket>() {
                 public void handle(final ServerWebSocket ws) {
+                   /* final Matcher m = chatUrlPattern.matcher(ws.path());
+                    if (!m.matches()) {
+                        ws.reject();
+                        return;
+                    }
 
+                    final String chatRoom = m.group(1);
+                    final String id = ws.textHandlerID();
+                    final String id = ws.textHandlerID();
+                    vertx.sharedData().getLocalMap("chat.room." + chatRoom).add(id); // Comparte datos con otro Verticles
+                    */
                     System.out.println(ws.path());
 
                     if (ws.path().equals("/myapp")) {
                         ws.handler(new Handler<Buffer>() {
                             public void handle(Buffer data) {
+                                JsonObject message = new JsonObject(data.toString());
+                                String dst = message.getString("dst");
+                                /*
+                                   if dst.getStatus() {
+                                    ws.write(Buffer.buffer("{ \"type\": \"test\", \"status\": \"online\"}"));
+                                   }
+                                 */
                                 ws.write(data); // Echo it back
                             }
                         });
                     } else {
-                        // ws.reject();
+                        ws.reject();
 
-                        ws.writeFinalTextFrame("hi there");
+                        //ws.writeFinalTextFrame("hi there");
                     }
                 }
             })

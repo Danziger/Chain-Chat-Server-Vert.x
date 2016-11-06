@@ -186,7 +186,8 @@ public class WebSocketRoutesTest {
 
         vertx.close(context.asyncAssertSuccess());
     }
-
+/*
+** Este test debría ser para comprobar el funcionamiento del WS
     @Test
     public void userOnlineTest(TestContext context) {
         final Async async = context.async();
@@ -194,9 +195,7 @@ public class WebSocketRoutesTest {
         MultiMap headers = new CaseInsensitiveHeaders();
         headers.add(COOKIE, cookies.get());
 
-        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
-
-            System.out.println("here");
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/myapp", headers, ws -> {
 
             ws.handler(buffer -> {
                 System.out.println(buffer.toString());
@@ -213,6 +212,33 @@ public class WebSocketRoutesTest {
             ws.write(Buffer.buffer("{ \"type\": \"test\"}"));
         });
     }
+*/
+
+    @Test
+    public void userOnlineTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/myapp", headers, ws -> {
+
+            ws.handler(buffer -> {
+                System.out.println(buffer.toString());
+                JsonObject message = new JsonObject(buffer.toString());
+
+                assertTrue(message.containsKey("status"));
+                assertEquals("online", message.getString("status"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"test\", \"dst\": \"bob\", \"src\": \"alice\"}"));
+        });
+    }
+
 
     // TODO: Hacerlo por tiempo.
     @Test
@@ -228,8 +254,8 @@ public class WebSocketRoutesTest {
             ws.handler(buffer -> {
                 JsonObject message = new JsonObject(buffer.toString());
 
-                assertTrue(message.containsKey("type"));
-                assertEquals("off", message.getString("type"));
+                assertTrue(message.containsKey("status"));
+                assertEquals("off", message.getString("status"));
 
                 ws.close();
 
