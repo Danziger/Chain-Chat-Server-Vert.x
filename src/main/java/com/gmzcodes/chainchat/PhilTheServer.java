@@ -1,5 +1,7 @@
 package com.gmzcodes.chainchat;
 
+import static io.vertx.core.http.HttpHeaders.COOKIE;
+
 import java.text.DateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -81,150 +83,6 @@ public class PhilTheServer extends AbstractVerticle {
         // router.mountSubRouter("/static", AssetsRoutes.get(vertx, authProvider));
         // router.mountSubRouter("/ws", WebsocketRoutes.get(vertx, authProvider));
 
-
-
-
-
-
-        // JUST TRYING TO MAKE THE WS SERVER RESPOND!
-
-        // TODO: https://github.com/vert-x3/vertx-web/blob/master/vertx-web/src/main/asciidoc/java/index.adoc#sub-routers
-
-        // OPTION A:
-
-        /*
-        BridgeOptions opts = new BridgeOptions()
-                .addInboundPermitted(new PermittedOptions().setAddressRegex("*"))
-                .addOutboundPermitted(new PermittedOptions().setAddressRegex("*"));
-
-        // Create the event bus bridge and add it to the router.
-        SockJSHandler ebHandler = SockJSHandler.create(vertx).bridge(opts, event -> {
-            System.out.println(event.type());
-
-            if (event.type() == BridgeEventType.SOCKET_CREATED) {
-                System.out.println("A socket was created");
-            } else {
-                System.out.println(event.type());
-            }
-
-            event.complete(true);
-        });
-
-        router.route("/ws/*").handler(ebHandler);
-
-*/
-
-        // OPTION B:
-
-/*
-        SockJSHandler ebHandler = SockJSHandler.create(vertx);
-
-        ebHandler.socketHandler(sockJSSocket -> {
-
-            System.out.println("Echo");
-
-            // Just echo the data back
-            sockJSSocket.handler(sockJSSocket::write);
-        });
-
-        router.route("/ws/*").handler(ebHandler);
-
-*/
-
-
-        // OPTION C:
-
-        /*
-        SockJSHandler ebHandler = SockJSHandler.create(vertx);
-        BridgeOptions options = new BridgeOptions();
-
-        ebHandler.bridge(options, be -> {
-            System.out.println("event");
-
-            if (be.type() == BridgeEventType.PUBLISH || be.type() == BridgeEventType.RECEIVE) {
-                if (be.getRawMessage().getString("body").equals("armadillos")) {
-                    // Reject it
-                    be.complete(false);
-                    return;
-                }
-            }
-
-            be.complete(true);
-        });
-
-        router.route("/ws/*").handler(ebHandler);
-
-        */
-
-
-/*
-
-        // Allow events for the designated addresses in/out of the event bus bridge
-        BridgeOptions opts = new BridgeOptions()
-                .addInboundPermitted(new PermittedOptions().setAddress("chat.to.server"))
-                .addOutboundPermitted(new PermittedOptions().setAddress("chat.to.client"));
-
-        // Create the event bus bridge and add it to the router.
-        SockJSHandler ebHandler = SockJSHandler.create(vertx).bridge(opts);
-        router.route("/eventbus/*").handler(ebHandler);
-
-        // Create a router endpoint for the static content.
-        router.route().handler(StaticHandler.create());
-
-        // Start the web server and tell it to use the router to handle requests.
-        vertx.createHttpServer().requestHandler(router::accept).listen(8080);
-
-        EventBus eb = vertx.eventBus();
-
-        // Register to listen for messages coming IN to the server
-        eb.consumer("chat.to.server").handler(message -> {
-            // Create a timestamp string
-            String timestamp = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Date.from(Instant.now()));
-            // Send the message back out to all clients with the timestamp prepended.
-            eb.publish("chat.to.client", timestamp + ": " + message.body());
-        });
-
-*/
-
-
-
-
-
-
-
-        // EventBus eb = vertx.eventBus();
-
-        /* eb.addInterceptor(message -> {
-            System.out.println("INTERCEPTOR: ");
-            System.out.println(message);
-        });*/
-
-        // Register to listen for messages coming IN to the server
-        /* eb.consumer("user2server").handler(message -> {
-            // TODO: Check if logged in
-            //router.route().handler(UserSessionHandler.create(authProvider));
-            System.out.println("CONSUMER");
-            System.out.println(message);
-
-            // TODO: Create middleware chain
-
-            // Create a timestamp string
-            //String timestamp = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Date.from(Instant.now()));
-
-            //Buffer buffer = Buffer.buffer("{\"type\":\"test\"}"));
-            //JsonObject msg = new JsonObject(buffer.toString());
-
-            // Send the message back out to all clients with the timestamp prepended.
-            eb.publish("server2user", message.body());
-        });*/
-
-
-
-
-
-
-
-
         // Default non-handled requests:
         router.route().handler(ctx -> {
             ctx.fail(404);
@@ -235,19 +93,40 @@ public class PhilTheServer extends AbstractVerticle {
             .createHttpServer()
             .websocketHandler(new Handler<ServerWebSocket>() {
                 public void handle(final ServerWebSocket ws) {
-
-                    System.out.println(ws.path());
-
-                    if (ws.path().equals("/myapp")) {
+                    if (ws.path().equals("/eventbus")) {
                         ws.handler(new Handler<Buffer>() {
                             public void handle(Buffer data) {
-                                ws.write(data); // Echo it back
+                                JsonObject message = new JsonObject();
+
+                                try {
+                                    message = new JsonObject(data.toString());
+                                } catch(Exception e) {
+                                    ws.writeFinalTextFrame("{ \"type\": \"error\", \"value\":\"MALFORMED_JSON\" }");
+
+                                    return;
+                                }
+
+                                JsonObject response = new JsonObject();
+
+                                String type = message.getString("type");
+
+                                switch(type) {
+                                    case "ping":
+                                        response.put("type", "pong");
+
+                                        break;
+
+                                    default:
+                                        ws.writeFinalTextFrame("{ \"type\": \"error\", \"value\":\"INVALID MESSAGE TYPE\" }");
+
+                                        return;
+                                }
+
+                                ws.writeFinalTextFrame(response.toString());
                             }
                         });
                     } else {
-                        // ws.reject();
-
-                        ws.writeFinalTextFrame("hi there");
+                        ws.reject();
                     }
                 }
             })
@@ -266,3 +145,140 @@ public class PhilTheServer extends AbstractVerticle {
             );
     }
 }
+
+/*
+
+// TODO: https://github.com/vert-x3/vertx-web/blob/master/vertx-web/src/main/asciidoc/java/index.adoc#sub-routers
+
+// TODO: FUCKING WEBSOCKET ENDPOINT NOT WORKING!
+
+// TODO: SO QUESTION: http://stackoverflow.com/questions/40514637/vert-x-websocket-returning-200-instead-of-101
+
+// TEST 1
+
+BridgeOptions opts = new BridgeOptions()
+        .addInboundPermitted(new PermittedOptions().setAddressRegex("*"))
+        .addOutboundPermitted(new PermittedOptions().setAddressRegex("*"));
+
+// Create the event bus bridge and add it to the router.
+SockJSHandler ebHandler = SockJSHandler.create(vertx).bridge(opts, event -> {
+    System.out.println(event.type());
+
+    if (event.type() == BridgeEventType.SOCKET_CREATED) {
+        System.out.println("A socket was created");
+    } else {
+        System.out.println(event.type());
+    }
+
+    event.complete(true);
+});
+
+router.route("/eventbus/*").handler(ebHandler);
+
+*/
+
+/*
+
+// TEST 2:
+
+SockJSHandler ebHandler = SockJSHandler.create(vertx);
+
+ebHandler.socketHandler(sockJSSocket -> {
+
+    System.out.println("Echo");
+
+    // Just echo the data back
+    sockJSSocket.handler(sockJSSocket::write);
+});
+
+router.route("/eventbus/*").handler(ebHandler);
+
+*/
+
+/*
+
+// TEST 3:
+
+SockJSHandler ebHandler = SockJSHandler.create(vertx);
+BridgeOptions options = new BridgeOptions();
+
+ebHandler.bridge(options, be -> {
+    System.out.println("event");
+
+    if (be.type() == BridgeEventType.PUBLISH || be.type() == BridgeEventType.RECEIVE) {
+        if (be.getRawMessage().getString("body").equals("armadillos")) {
+            // Reject it
+            be.complete(false);
+            return;
+        }
+    }
+
+    be.complete(true);
+});
+
+router.route("/ws/*").handler(ebHandler);
+
+*/
+
+/*
+
+TEST 4:
+
+// Allow events for the designated addresses in/out of the event bus bridge
+BridgeOptions opts = new BridgeOptions()
+        .addInboundPermitted(new PermittedOptions().setAddress("chat.to.server"))
+        .addOutboundPermitted(new PermittedOptions().setAddress("chat.to.client"));
+
+// Create the event bus bridge and add it to the router.
+SockJSHandler ebHandler = SockJSHandler.create(vertx).bridge(opts);
+router.route("/eventbus/*").handler(ebHandler);
+
+// Create a router endpoint for the static content.
+router.route().handler(StaticHandler.create());
+
+// Start the web server and tell it to use the router to handle requests.
+vertx.createHttpServer().requestHandler(router::accept).listen(8080);
+
+EventBus eb = vertx.eventBus();
+
+// Register to listen for messages coming IN to the server
+eb.consumer("chat.to.server").handler(message -> {
+    // Create a timestamp string
+    String timestamp = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Date.from(Instant.now()));
+    // Send the message back out to all clients with the timestamp prepended.
+    eb.publish("chat.to.client", timestamp + ": " + message.body());
+});
+
+*/
+
+/*
+
+TEST 5:
+
+// EventBus eb = vertx.eventBus();
+
+eb.addInterceptor(message -> {
+    System.out.println("INTERCEPTOR: ");
+    System.out.println(message);
+});
+
+// Register to listen for messages coming IN to the server
+eb.consumer("user2server").handler(message -> {
+    // TODO: Check if logged in
+    //router.route().handler(UserSessionHandler.create(authProvider));
+    System.out.println("CONSUMER");
+    System.out.println(message);
+
+    // TODO: Create middleware chain
+
+    // Create a timestamp string
+    //String timestamp = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Date.from(Instant.now()));
+
+    //Buffer buffer = Buffer.buffer("{\"type\":\"test\"}"));
+    //JsonObject msg = new JsonObject(buffer.toString());
+
+    // Send the message back out to all clients with the timestamp prepended.
+    eb.publish("server2user", message.body());
+});
+
+*/
