@@ -1,4 +1,4 @@
-package com.gmzcodes.chainchat.routes.ws;
+package com.gmzcodes.chainchat.handlers.websocket;
 
 import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.gmzcodes.chainchat.PhilTheServer;
@@ -37,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
-public class WebSocketRoutesTest {
+public class WebSocketHandlerTest {
     protected AtomicReference<String> cookies = new AtomicReference<>();
 
     private int PORT = 8083;
@@ -115,71 +115,6 @@ public class WebSocketRoutesTest {
         });
     }
 
-    @Before
-    public void setUp2(TestContext context) {
-        final Async async = context.async();
-
-        vertx = Vertx.vertx();
-
-        // Get random PORT:
-
-        try {
-            ServerSocket socket = new ServerSocket(0);
-
-            PORT = socket.getLocalPort();
-
-            socket.close();
-        } catch (IOException e) { }
-
-        // Create config JSON:
-
-        JsonObject config = new JsonObject().put("http.port", PORT);
-
-        // Create options object from config JSON:
-
-        DeploymentOptions options = new DeploymentOptions().setConfig(config);
-
-        // Create a client:
-
-        client = vertx.createHttpClient();
-
-        // Deploy Phil:
-
-        philTheServer = new PhilTheServer();
-
-        // Wait for Phil...
-
-        vertx.deployVerticle(philTheServer, options, ctx -> {
-
-            // Login handler:
-
-            HttpClientRequest req = client.post(PORT, "localhost", "/api/auth", response -> {
-                context.assertEquals(200, response.statusCode());
-
-                String setCookie = response.headers().get(SET_COOKIE);
-
-                context.assertNotNull(setCookie);
-
-                cookies.set(setCookie); // Keep session cookie for later
-
-                response.bodyHandler(body -> {
-                    //context.asyncAssertSuccess();
-                    context.assertEquals(body.toString(), "{}");
-
-                    async.complete();
-                });
-            });
-
-            // Login data:
-
-            String formData = "{ \"username\": \"bob\", \"password\": \"bob1234\" }";
-
-            req.putHeader("Content-Length", String.valueOf(formData.length()));
-
-            req.end(formData);
-        });
-    }
-
     @After
     public void tearDown(TestContext context) {
         client.close();
@@ -188,53 +123,85 @@ public class WebSocketRoutesTest {
     }
 
     @Test
-    public void userOnlineTest(TestContext context) {
+    public void websocketPingPongTest(TestContext context) {
         final Async async = context.async();
 
         MultiMap headers = new CaseInsensitiveHeaders();
         headers.add(COOKIE, cookies.get());
 
         HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
-
-            System.out.println("here");
-
             ws.handler(buffer -> {
-                System.out.println(buffer.toString());
                 JsonObject message = new JsonObject(buffer.toString());
 
                 assertTrue(message.containsKey("type"));
-                assertEquals("tim", message.getString("type"));
+                assertEquals("pong", message.getString("type"));
 
                 ws.close();
 
                 async.complete();
             });
 
-            ws.write(Buffer.buffer("{ \"type\": \"test\"}"));
+            ws.write(Buffer.buffer("{ \"type\": \"ping\" }"));
         });
     }
 
-    // TODO: Hacerlo por tiempo.
     @Test
-    public void userOfflineTest(TestContext context) {
+    public void websocketWrongEndpointTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/ws", headers, ws -> {
+            ws.write(Buffer.buffer("{ \"type\": \"ping\" }"));
+        }, ws -> {
+            async.complete();
+        });
+    }
+
+    @Test
+    public void websocketMalformedMessageTest(TestContext context) {
         final Async async = context.async();
 
         MultiMap headers = new CaseInsensitiveHeaders();
         headers.add(COOKIE, cookies.get());
 
         HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
-            ws.write(Buffer.buffer("{\"type\":\"test\"}"));
-
             ws.handler(buffer -> {
                 JsonObject message = new JsonObject(buffer.toString());
 
                 assertTrue(message.containsKey("type"));
-                assertEquals("off", message.getString("type"));
+                assertEquals("error", message.getString("type"));
 
                 ws.close();
 
                 async.complete();
             });
+
+            ws.write(Buffer.buffer("{ \"type\": \"ping\" "));
+        });
+    }
+
+    @Test
+    public void websocketInvalidMessageTypeTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                assertTrue(message.containsKey("type"));
+                assertEquals("error", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"test\" }"));
         });
     }
 }

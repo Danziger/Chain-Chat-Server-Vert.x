@@ -109,32 +109,4 @@ public class PhilTheServerTest {
             });
         });
     }
-
-    @Test
-    public void socketTest(TestContext context) throws Exception {
-        // context.assertTrue(false);
-
-        // TODO: http://www.programcreek.com/java-api-examples/index.php?source_dir=wisdom-master/core/wisdom-vertx-engine/src/test/java/org/wisdom/framework/vertx/WebSocketTest.java
-       /* prepareServer();
-
-        Spy spy = new Spy(server);
-        server.register(spy);
-
-        final CountDownLatch done = new CountDownLatch(1);
-        final StringBuilder marker = new StringBuilder();
-
-        HttpClient client = vertx.createHttpClient().getNow(PORT, "localhost", "/ws", ws -> {
-            ws.handler(event -> {
-                if (event.toString().equals("pong")) {
-                    marker.append("pong");
-                    done.countDown();
-                }
-            });
-            ws.write(Buffer.buffer("ping"));
-        });
-
-        done.await(30, TimeUnit.SECONDS);
-        assertThat(marker).containsOnlyOnce("pong");
-        client.close();*/
-    }
 }
