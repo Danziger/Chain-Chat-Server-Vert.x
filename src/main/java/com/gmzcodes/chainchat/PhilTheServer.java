@@ -2,6 +2,9 @@ package com.gmzcodes.chainchat;
 
 import com.gmzcodes.chainchat.handlers.websocket.WebSocketHandler;
 import com.gmzcodes.chainchat.routes.api.APIRoutes;
+import com.gmzcodes.chainchat.store.ConversationsStore;
+import com.gmzcodes.chainchat.store.TokensStore;
+import com.gmzcodes.chainchat.store.UsersStore;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -17,6 +20,10 @@ import io.vertx.ext.web.sstore.LocalSessionStore;
 public class PhilTheServer extends AbstractVerticle {
 
     private final static int PORT = 8080;
+
+    private ConversationsStore conversationsStore = new ConversationsStore();
+    private TokensStore tokensStore = new TokensStore();
+    private UsersStore usersStore = new UsersStore();
 
     // TODO LIST:
 
@@ -68,7 +75,7 @@ public class PhilTheServer extends AbstractVerticle {
             ctx.response().sendFile("webroot/index.html");
         });
 
-        router.mountSubRouter("/api", APIRoutes.get(vertx, authProvider));
+        router.mountSubRouter("/api", APIRoutes.get(vertx, authProvider, conversationsStore, tokensStore, usersStore));
         // router.mountSubRouter("/static", AssetsRoutes.get(vertx, authProvider));
         // router.mountSubRouter("/ws", WebsocketRoutes.get(vertx, authProvider));
 
@@ -80,7 +87,7 @@ public class PhilTheServer extends AbstractVerticle {
         // Create the HTTP server and pass the "accept" method to the request handler.
         vertx
             .createHttpServer()
-            .websocketHandler(new WebSocketHandler())
+            .websocketHandler(new WebSocketHandler(conversationsStore, tokensStore, usersStore))
             .requestHandler(router::accept)
             .listen(
                     // Retrieve the port from the configuration,
@@ -104,6 +111,20 @@ public class PhilTheServer extends AbstractVerticle {
 // TODO: FUCKING WEBSOCKET ENDPOINT NOT WORKING!
 
 // TODO: SO QUESTION: http://stackoverflow.com/questions/40514637/vert-x-websocket-returning-200-instead-of-101
+
+/*
+
+// TODO: Maybe try...:
+
+router.get(wsRE).handler(rc -> {
+      ServerWebSocket ws = rc.request().upgrade();
+      SockJSSocket sock = new RawWSSockJSSocket(vertx, rc.session(), ws);
+      sockHandler.handle(sock);
+    });
+
+*/
+
+/*
 
 // TEST 1
 

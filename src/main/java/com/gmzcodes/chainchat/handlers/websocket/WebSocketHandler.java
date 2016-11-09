@@ -1,5 +1,9 @@
 package com.gmzcodes.chainchat.handlers.websocket;
 
+import com.gmzcodes.chainchat.store.ConversationsStore;
+import com.gmzcodes.chainchat.store.TokensStore;
+import com.gmzcodes.chainchat.store.UsersStore;
+
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ServerWebSocket;
@@ -9,6 +13,23 @@ import io.vertx.core.json.JsonObject;
  * Created by danigamez on 09/11/2016.
  */
 public class WebSocketHandler implements Handler<ServerWebSocket> {
+
+    /*
+    - After login, a list of friends, recent messages (read and unread) and token is returned.
+      - If token exists, return that. Else, create it. Check for expiration.
+    - After socket connected, a list of connected users is kept.
+
+    */
+
+    private ConversationsStore conversationsStore;
+    private TokensStore tokensStore;
+    private UsersStore usersStore;
+
+    public WebSocketHandler(ConversationsStore conversationsStore, TokensStore tokensStore, UsersStore usersStore) {
+        this.conversationsStore = conversationsStore;
+        this.tokensStore = tokensStore;
+        this.usersStore = usersStore;
+    }
 
     public void handle(final ServerWebSocket ws) {
         if (ws.path().equals("/eventbus")) {

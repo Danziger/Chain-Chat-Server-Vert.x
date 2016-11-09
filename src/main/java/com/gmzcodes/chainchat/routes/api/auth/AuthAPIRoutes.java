@@ -1,5 +1,9 @@
 package com.gmzcodes.chainchat.routes.api.auth;
 
+import com.gmzcodes.chainchat.store.ConversationsStore;
+import com.gmzcodes.chainchat.store.TokensStore;
+import com.gmzcodes.chainchat.store.UsersStore;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerResponse;
@@ -24,7 +28,7 @@ public final class AuthAPIRoutes {
 
     */
 
-    public static Router get(Vertx vertx, AuthProvider authProvider) {
+    public static Router get(Vertx vertx, AuthProvider authProvider, ConversationsStore conversationsStore, TokensStore tokensStore, UsersStore usersStore) {
         Router router = Router.router(vertx);
 
         router.route().consumes("application/json");
@@ -53,6 +57,8 @@ public final class AuthAPIRoutes {
                 return;
             }
 
+            final String username = credentials.getString("username");
+
             // Use the auth handler to perform the authentication for us
             authProvider.authenticate(credentials, login -> {
                 if (login.failed()) {
@@ -61,7 +67,14 @@ public final class AuthAPIRoutes {
                 }
 
                 ctx.setUser(login.result());
-                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end("{}"); // TODO: Return user and all user data
+
+                // TODO: This could be set in the session if the WebSocket worked as expected...
+
+                JsonObject response = usersStore.get(username);
+                response.put("conversations", conversationsStore.getJson(username));
+                response.put("token", tokensStore.generate(username).getId());
+
+                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(response.toString()); // TODO: Return user and all user data
             });
         });
 
