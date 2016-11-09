@@ -1,4 +1,4 @@
-package com.gmzcodes.chainchat.routes.ws;
+package com.gmzcodes.chainchat.handlers.websocket;
 
 import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.gmzcodes.chainchat.PhilTheServer;
@@ -37,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
-public class WebSocketRoutesTest {
+public class WebSocketHandlerTest {
     protected AtomicReference<String> cookies = new AtomicReference<>();
 
     private int PORT = 8083;

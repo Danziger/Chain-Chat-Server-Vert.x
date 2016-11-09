@@ -1,20 +1,10 @@
 package com.gmzcodes.chainchat;
 
-import static io.vertx.core.http.HttpHeaders.COOKIE;
-
-import java.text.DateFormat;
-import java.time.Instant;
-import java.util.Date;
-
+import com.gmzcodes.chainchat.handlers.websocket.WebSocketHandler;
 import com.gmzcodes.chainchat.routes.api.APIRoutes;
 
-import com.gmzcodes.chainchat.routes.ws.WebsocketRoutes;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.shiro.ShiroAuth;
@@ -22,7 +12,6 @@ import io.vertx.ext.auth.shiro.ShiroAuthOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.*;
-import io.vertx.ext.web.handler.sockjs.*;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 
 public class PhilTheServer extends AbstractVerticle {
@@ -91,45 +80,7 @@ public class PhilTheServer extends AbstractVerticle {
         // Create the HTTP server and pass the "accept" method to the request handler.
         vertx
             .createHttpServer()
-            .websocketHandler(new Handler<ServerWebSocket>() {
-                public void handle(final ServerWebSocket ws) {
-                    if (ws.path().equals("/eventbus")) {
-                        ws.handler(new Handler<Buffer>() {
-                            public void handle(Buffer data) {
-                                JsonObject message = new JsonObject();
-
-                                try {
-                                    message = new JsonObject(data.toString());
-                                } catch(Exception e) {
-                                    ws.writeFinalTextFrame("{ \"type\": \"error\", \"value\":\"MALFORMED_JSON\" }");
-
-                                    return;
-                                }
-
-                                JsonObject response = new JsonObject();
-
-                                String type = message.getString("type");
-
-                                switch(type) {
-                                    case "ping":
-                                        response.put("type", "pong");
-
-                                        break;
-
-                                    default:
-                                        ws.writeFinalTextFrame("{ \"type\": \"error\", \"value\":\"INVALID MESSAGE TYPE\" }");
-
-                                        return;
-                                }
-
-                                ws.writeFinalTextFrame(response.toString());
-                            }
-                        });
-                    } else {
-                        ws.reject();
-                    }
-                }
-            })
+            .websocketHandler(new WebSocketHandler())
             .requestHandler(router::accept)
             .listen(
                     // Retrieve the port from the configuration,
