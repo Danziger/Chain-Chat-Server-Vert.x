@@ -2,6 +2,7 @@ package com.gmzcodes.chainchat.models;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Date;
 
 /**
@@ -15,7 +16,8 @@ public class Token {
     private Date createdOn;
 
     public Token(String username) {
-        this.id = new BigInteger(1024, random).toString(32);
+        // 3 bytes to 4 chars, 2048 bits = 256 bytes, 4 * 256 bytes / 3 = 341.3 characters + PADDING = 344
+        this.id = Base64.getEncoder().encodeToString(new BigInteger(2048, random).toByteArray());
         this.username = username;
         this.createdOn = new Date();
     }
