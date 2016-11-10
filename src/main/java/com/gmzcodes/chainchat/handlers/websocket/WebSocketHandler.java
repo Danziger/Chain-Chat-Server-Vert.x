@@ -55,11 +55,31 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
 
                     JsonObject response = new JsonObject();
 
+                    String from = message.getString("username");
                     String type = message.getString("type");
 
                     switch(type) {
                         case "ping":
                             response.put("type", "pong");
+
+                            break;
+
+                        case "msg":
+                            if (!message.containsKey("to") || !usersStore.get(from).getJsonArray("contacts").contains(message.getString("to") )) {
+                                ws.writeFinalTextFrame("{ \"type\": \"error\", \"value\":\"INVALID DESTINATION\" }");
+
+                                return;
+                            }
+
+                            String to = message.getString("to");
+
+                            // TODO: Add locally set IDs to the messages! Or local date!
+
+                            // TODO: Store message
+
+                            // TODO: Forward
+
+                            response.put("type", "ack");
 
                             break;
 
