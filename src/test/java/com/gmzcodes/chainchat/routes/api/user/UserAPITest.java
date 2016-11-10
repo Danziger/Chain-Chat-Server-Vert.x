@@ -1,5 +1,6 @@
 package com.gmzcodes.chainchat;
 
+import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
 import static io.vertx.core.http.HttpHeaders.COOKIE;
 import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
 import static junit.framework.TestCase.assertTrue;
@@ -15,6 +16,8 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
+
+import com.gmzcodes.chainchat.constants.ExpectedValues;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
@@ -90,9 +93,7 @@ public class UserAPITest {
                 cookies.set(setCookie); // Keep session cookie for later
 
                 response.bodyHandler(body -> {
-                    //context.asyncAssertSuccess();
-                    // context.assertEquals(body.toString(), "{ name: alice, contacts: [bob, chris], messages: []}");
-                    // TODO: Fix this test!
+                    assertJsonEquals(context, ExpectedValues.USER_ALICE, body.toJsonObject(), false);
 
                     async.complete();
                 });
@@ -122,7 +123,6 @@ public class UserAPITest {
 
         HttpClientRequest req = client.get(PORT, "localhost", "/api/user/contacts", response -> {
             context.assertEquals(200, response.statusCode());
-            System.out.println(response.cookies());
 
             response.bodyHandler(body -> {
                 JsonArray contacts = body.toJsonArray();
