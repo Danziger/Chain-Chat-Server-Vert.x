@@ -24,6 +24,7 @@ import com.gmzcodes.chainchat.constants.ExpectedValues;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.json.JsonObject;
@@ -68,7 +69,9 @@ public class AuthAPITest {
 
         // Create options object from config JSON:
 
-        DeploymentOptions options = new DeploymentOptions().setConfig(config);
+        DeploymentOptions options = new DeploymentOptions()
+                .setConfig(config)
+                .setWorker(true); // Prevents thread blocked WARNING in tests.
 
         // Create a client:
 

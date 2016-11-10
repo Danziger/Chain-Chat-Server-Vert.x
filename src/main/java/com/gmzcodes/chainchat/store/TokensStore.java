@@ -30,10 +30,6 @@ public class TokensStore {
     public boolean verify(String id, String username) {
         // TODO: Take dates into account!
 
-        if (tokensById.containsKey(id) && tokensById.get(id).verifyUsername(username)) {
-            return true;
-        }
-
-        return false;
+        return tokensById.containsKey(id) && tokensById.get(id).verifyUsername(username);
     }
 }

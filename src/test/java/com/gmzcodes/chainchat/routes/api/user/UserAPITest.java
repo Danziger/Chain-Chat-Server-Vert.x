@@ -67,7 +67,9 @@ public class UserAPITest {
 
         // Create options object from config JSON:
 
-        DeploymentOptions options = new DeploymentOptions().setConfig(config);
+        DeploymentOptions options = new DeploymentOptions()
+                .setConfig(config)
+                .setWorker(true); // Prevents thread blocked WARNING in tests.
 
         // Create a client:
 
