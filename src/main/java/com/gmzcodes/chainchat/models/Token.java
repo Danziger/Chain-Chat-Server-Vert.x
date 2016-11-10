@@ -15,9 +15,9 @@ public class Token {
     private Date createdOn;
 
     public Token(String username) {
-        id = new BigInteger(1024, random).toString(32);
-        username = username;
-        createdOn = new Date();
+        this.id = new BigInteger(1024, random).toString(32);
+        this.username = username;
+        this.createdOn = new Date();
     }
 
     public String getId() {

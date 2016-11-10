@@ -45,6 +45,14 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
                         return;
                     }
 
+                    if (!message.containsKey("token") ||
+                        !message.containsKey("username") ||
+                        !tokensStore.verify(message.getString("token"), message.getString("username"))) {
+                        ws.writeFinalTextFrame("{ \"type\": \"error\", \"value\":\"INVALID_TOKEN\" }");
+
+                        return;
+                    }
+
                     JsonObject response = new JsonObject();
 
                     String type = message.getString("type");

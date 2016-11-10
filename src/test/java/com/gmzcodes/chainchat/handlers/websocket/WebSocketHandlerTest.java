@@ -1,7 +1,25 @@
 package com.gmzcodes.chainchat.handlers.websocket;
 
-import com.fasterxml.jackson.databind.util.JSONPObject;
+import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
+import static io.vertx.core.http.HttpHeaders.COOKIE;
+import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.PowerMockRunnerDelegate;
+
 import com.gmzcodes.chainchat.PhilTheServer;
+import com.gmzcodes.chainchat.constants.ExpectedValues;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.MultiMap;
@@ -14,22 +32,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.modules.junit4.PowerMockRunnerDelegate;
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static io.vertx.core.http.HttpHeaders.COOKIE;
-import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Raul on 12/10/2016.
@@ -39,6 +41,7 @@ import static org.junit.Assert.assertTrue;
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
 public class WebSocketHandlerTest {
     protected AtomicReference<String> cookies = new AtomicReference<>();
+    protected AtomicReference<String> token = new AtomicReference<>();
 
     private int PORT = 8083;
 
@@ -97,9 +100,13 @@ public class WebSocketHandlerTest {
                 cookies.set(setCookie); // Keep session cookie for later
 
                 response.bodyHandler(body -> {
-                    //context.asyncAssertSuccess();
-                    // context.assertEquals(body.toString(), "{}");
-                    // TODO: Fix this test!
+                    JsonObject jsonResponse = body.toJsonObject();
+
+                    assertJsonEquals(context, ExpectedValues.USER_ALICE, jsonResponse, false);
+
+                    assertTrue(jsonResponse.containsKey("token"));
+
+                    token.set(jsonResponse.getString("token"));
 
                     async.complete();
                 });
@@ -121,29 +128,6 @@ public class WebSocketHandlerTest {
         client.close();
 
         vertx.close(context.asyncAssertSuccess());
-    }
-
-    @Test
-    public void websocketPingPongTest(TestContext context) {
-        final Async async = context.async();
-
-        MultiMap headers = new CaseInsensitiveHeaders();
-        headers.add(COOKIE, cookies.get());
-
-        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
-            ws.handler(buffer -> {
-                JsonObject message = new JsonObject(buffer.toString());
-
-                assertTrue(message.containsKey("type"));
-                assertEquals("pong", message.getString("type"));
-
-                ws.close();
-
-                async.complete();
-            });
-
-            ws.write(Buffer.buffer("{ \"type\": \"ping\" }"));
-        });
     }
 
     @Test
@@ -171,8 +155,8 @@ public class WebSocketHandlerTest {
             ws.handler(buffer -> {
                 JsonObject message = new JsonObject(buffer.toString());
 
-                assertTrue(message.containsKey("type"));
-                assertEquals("error", message.getString("type"));
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("error", message.getString("type"));
 
                 ws.close();
 
@@ -180,6 +164,75 @@ public class WebSocketHandlerTest {
             });
 
             ws.write(Buffer.buffer("{ \"type\": \"ping\" "));
+        });
+    }
+
+    @Test
+    public void websocketMissingTokenTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("error", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\" }"));
+        });
+    }
+
+    @Test
+    public void websocketMissingUsernameTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("error", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"token\": \"" + token + "\"}"));
+        });
+    }
+
+    @Test
+    public void websocketInvalidTokenTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("error", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\", \"token\": \"1234\"}"));
         });
     }
 
@@ -194,15 +247,38 @@ public class WebSocketHandlerTest {
             ws.handler(buffer -> {
                 JsonObject message = new JsonObject(buffer.toString());
 
-                assertTrue(message.containsKey("type"));
-                assertEquals("error", message.getString("type"));
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("error", message.getString("type"));
 
                 ws.close();
 
                 async.complete();
             });
 
-            ws.write(Buffer.buffer("{ \"type\": \"test\" }"));
+            ws.write(Buffer.buffer("{ \"type\": \"test\", \"username\": \"alice\", \"token\": \"" + token + "\"}"));
+        });
+    }
+
+    @Test
+    public void websocketPingPongTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("pong", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\", \"token\": \"" + token + "\"}"));
         });
     }
 }

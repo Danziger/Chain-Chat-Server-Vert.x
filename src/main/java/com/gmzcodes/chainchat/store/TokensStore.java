@@ -1,8 +1,5 @@
 package com.gmzcodes.chainchat.store;
 
-import java.math.BigInteger;
-import java.security.SecureRandom;
-import java.util.Date;
 import java.util.HashMap;
 
 import com.gmzcodes.chainchat.models.Token;

@@ -14,20 +14,17 @@ public class UsersStore {
         users.put("alice", new JsonObject()
                 .put("username", "alice")
                 .put("name", "Alice Clinton")
-                .put("contacts", new JsonArray().add("bob").add("chris"))
-                .put("messages", new JsonArray()));
+                .put("contacts", new JsonArray().add("bob").add("chris")));
 
         users.put("bob", new JsonObject()
                 .put("username", "bob")
                 .put("name", "Bob Trump")
-                .put("contacts", new JsonArray().add("alice"))
-                .put("messages", new JsonArray()));
+                .put("contacts", new JsonArray().add("alice")));
 
         users.put("chris", new JsonObject()
                 .put("username", "chris")
                 .put("name", "Chris Sambora")
-                .put("contacts", new JsonArray().add("chris"))
-                .put("messages", new JsonArray()));
+                .put("contacts", new JsonArray().add("chris")));
     }
 
     public JsonObject get(String username) {
