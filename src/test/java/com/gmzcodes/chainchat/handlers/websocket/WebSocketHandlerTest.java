@@ -232,7 +232,7 @@ public class WebSocketHandlerTest {
                 async.complete();
             });
 
-            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\", \"token\": \"1234\"}"));
+            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\", \"token\": \"1234\" }"));
         });
     }
 
@@ -255,7 +255,30 @@ public class WebSocketHandlerTest {
                 async.complete();
             });
 
-            ws.write(Buffer.buffer("{ \"type\": \"test\", \"username\": \"alice\", \"token\": \"" + token + "\"}"));
+            ws.write(Buffer.buffer("{ \"type\": \"test\", \"username\": \"alice\", \"token\": \"" + token + "\" }"));
+        });
+    }
+
+    @Test
+    public void websocketInvalidUsernameTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("error", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"bob\", \"token\": \"" + token + "\" }"));
         });
     }
 
@@ -278,7 +301,76 @@ public class WebSocketHandlerTest {
                 async.complete();
             });
 
-            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\", \"token\": \"" + token + "\"}"));
+            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\", \"token\": \"" + token + "\" }"));
+        });
+    }
+
+    @Test
+    public void websocketMissingToTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("error", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"msg\", \"username\": \"alice\", \"token\": \"" + token + "\", \"value\": \"Hi\" }"));
+        });
+    }
+
+    @Test
+    public void websocketUnreachableContactTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("error", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"msg\", \"username\": \"alice\", \"token\": \"" + token + "\", \"to\": \"dani\", \"value\": \"Hi\" }"));
+        });
+    }
+
+    @Test
+    public void websocketMessageOkTest(TestContext context) {
+        final Async async = context.async();
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+        headers.add(COOKIE, cookies.get());
+
+        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
+            ws.handler(buffer -> {
+                JsonObject message = new JsonObject(buffer.toString());
+
+                context.assertTrue(message.containsKey("type"));
+                context.assertEquals("ack", message.getString("type"));
+
+                ws.close();
+
+                async.complete();
+            });
+
+            ws.write(Buffer.buffer("{ \"type\": \"msg\", \"username\": \"alice\", \"token\": \"" + token + "\", \"to\": \"bob\", \"value\": \"Hi\" }"));
         });
     }
 }
