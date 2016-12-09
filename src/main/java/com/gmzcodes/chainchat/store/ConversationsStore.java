@@ -19,6 +19,8 @@ public class ConversationsStore {
     private HashMap<String, List<Conversation>> conversationsByUser = new HashMap<String, List<Conversation>>();
 
     public ConversationsStore() {
+        // TODO: This should be mocked!
+
         Conversation aliceBob = new Conversation("alice", "bob");
         Conversation aliceChris = new Conversation("alice", "chris");
 

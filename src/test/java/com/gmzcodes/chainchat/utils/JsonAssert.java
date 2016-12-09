@@ -12,7 +12,7 @@ import io.vertx.ext.unit.TestContext;
 public final class JsonAssert {
     private JsonAssert() {}
 
-    public static final void assertJsonEquals(TestContext context, String message, JsonObject expected, JsonObject current, boolean strict) {
+    public static void assertJsonEquals(TestContext context, String message, JsonObject expected, JsonObject current, boolean strict) {
         // TODO: Implement messages support.
         // TODO: Implement strict mode.
 
@@ -20,7 +20,7 @@ public final class JsonAssert {
             String key = entry.getKey();
             Object value = entry.getValue();
 
-            context.assertTrue(current.containsKey(key));
+            context.assertTrue(current.containsKey(key), current.toString());
 
             if (value instanceof JsonObject) {
                 assertJsonEquals(context, message, (JsonObject)value, current.getJsonObject(key), strict);
@@ -45,7 +45,15 @@ public final class JsonAssert {
         }
     }
 
-    public static final void assertJsonEquals(TestContext context, JsonObject expected, JsonObject current, boolean strict) {
+    public static void assertJsonEquals(TestContext context, String message, JsonObject expected, JsonObject current) {
+        assertJsonEquals(context, message, expected, current, false);
+    }
+
+    public static void assertJsonEquals(TestContext context, JsonObject expected, JsonObject current, boolean strict) {
         assertJsonEquals(context, null, expected, current, strict);
+    }
+
+    public static void assertJsonEquals(TestContext context, JsonObject expected, JsonObject current) {
+        assertJsonEquals(context, expected, current, false);
     }
 }

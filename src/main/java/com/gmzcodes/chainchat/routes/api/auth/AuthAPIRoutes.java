@@ -68,7 +68,7 @@ public final class AuthAPIRoutes {
 
                 ctx.setUser(login.result());
 
-                // TODO: This could be set in the session if the WebSocket worked as expected...
+                System.out.println("SESSION ID = " + ctx.session().id());
 
                 JsonObject response = usersStore.get(username);
                 response.put("conversations", conversationsStore.getJson(username));
