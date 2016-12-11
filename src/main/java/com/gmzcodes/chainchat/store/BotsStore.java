@@ -3,7 +3,7 @@ package com.gmzcodes.chainchat.store;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.gmzcodes.chainchat.models.Bot;
+import com.gmzcodes.chainchat.bots.Bot;
 
 /**
  * Created by danigamez on 09/12/2016.

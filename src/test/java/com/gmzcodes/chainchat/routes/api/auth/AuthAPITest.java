@@ -1,5 +1,8 @@
 package com.gmzcodes.chainchat;
 
+import static com.gmzcodes.chainchat.constants.ExpectedValues.PASS_ALICE;
+import static com.gmzcodes.chainchat.constants.ExpectedValues.USERNAME_ALICE;
+import static com.gmzcodes.chainchat.constants.ServerConfigValues.HOSTNAME;
 import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
 import static io.vertx.core.http.HttpHeaders.COOKIE;
 import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
@@ -20,6 +23,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.constants.ExpectedValues;
+import com.gmzcodes.chainchat.utils.TestClient;
+import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
@@ -36,95 +41,44 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
 public class AuthAPITest {
-
-    protected AtomicReference<String> cookies = new AtomicReference<>();
-
-    private int PORT = 8081;
-
-    private Vertx vertx;
-    private PhilTheServer philTheServer;
+    private TestSetupEndToEnd testSetup;
+    private TestClient testClient;
     private HttpClient client;
-
-    // TODO: Helper method/class for authenticated tests
+    private int PORT;
 
     @Before
     public void setUp(TestContext context) {
         final Async async = context.async();
 
-        vertx = Vertx.vertx();
+        // TODO: Configure testClient to test end to end or unit!
 
-        // Get random PORT:
+        testSetup = new TestSetupEndToEnd(context, ctx -> {
+            // GET CLIENTS:
 
-        try {
-            ServerSocket socket = new ServerSocket(0);
+            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {
+                context.assertEquals("alice@1", identifier);
 
-            PORT = socket.getLocalPort();
-
-            socket.close();
-        } catch (IOException e) { }
-
-        // Create config JSON:
-
-        JsonObject config = new JsonObject().put("http.port", PORT);
-
-        // Create options object from config JSON:
-
-        DeploymentOptions options = new DeploymentOptions()
-                .setConfig(config)
-                .setWorker(true); // Prevents thread blocked WARNING in tests.
-
-        // Create a client:
-
-        client = vertx.createHttpClient();
-
-        // Deploy Phil:
-
-        philTheServer = new PhilTheServer();
-
-        // Wait for Phil...
-
-        vertx.deployVerticle(philTheServer, options, ctx -> {
-
-            // Login handler:
-
-            HttpClientRequest req = client.post(PORT, "localhost", "/api/auth", response -> {
-                context.assertEquals(200, response.statusCode());
-
-                String setCookie = response.headers().get(SET_COOKIE);
-
-                context.assertNotNull(setCookie);
-
-                cookies.set(setCookie); // Keep session cookie for later
-
-                response.bodyHandler(body -> {
-                    assertJsonEquals(context, ExpectedValues.USER_ALICE, body.toJsonObject(), false);
-
-                    async.complete();
-                });
+                async.complete();
             });
-
-            // Login data:
-
-            String formData = "{ \"username\": \"alice\", \"password\": \"alice1234\" }";
-
-            req.putHeader("Content-Length", String.valueOf(formData.length()));
-
-            req.end(formData);
         });
+
+        PORT = testSetup.getPort();
+        client = testSetup.getClient();
+        testClient = testSetup.getTestClient();
     }
 
     @After
     public void tearDown(TestContext context) {
-        client.close();
+        final Async async = context.async();
 
-        vertx.close(context.asyncAssertSuccess());
+        testSetup.kill(ctx -> async.complete());
     }
 
     @Test
     public void loginEmptyTest(TestContext context) throws Exception {
         final Async async = context.async();
 
-        HttpClientRequest request = client.post(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest request = client.post(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(400, response.statusCode());
 
             async.complete();
@@ -137,7 +91,7 @@ public class AuthAPITest {
     public void loginIncorrectShortHeaderTest(TestContext context) throws Exception {
         final Async async = context.async();
 
-        HttpClientRequest request = client.post(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest request = client.post(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(400, response.statusCode());
 
             async.complete();
@@ -155,7 +109,7 @@ public class AuthAPITest {
     public void loginIncorrectLongHeaderTest(TestContext context) throws TimeoutException {
         final Async async = context.async();
 
-        HttpClientRequest request = client.post(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest request = client.post(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertTrue(false, "This response should have never been made!");
 
             async.complete();
@@ -173,7 +127,7 @@ public class AuthAPITest {
     public void loginMalformedTest(TestContext context) throws Exception {
         final Async async = context.async();
 
-        HttpClientRequest request = client.post(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest request = client.post(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(400, response.statusCode());
 
             async.complete();
@@ -191,7 +145,7 @@ public class AuthAPITest {
     public void loginFailedTest(TestContext context) throws Exception {
         final Async async = context.async();
 
-        HttpClientRequest request = client.post(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest request = client.post(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(401, response.statusCode());
 
             async.complete();
@@ -209,7 +163,7 @@ public class AuthAPITest {
     public void loginSuccessfulTest(TestContext context) throws Exception {
         final Async async = context.async();
 
-        HttpClientRequest request = client.post(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest request = client.post(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(200, response.statusCode());
 
             response.bodyHandler(body -> {
@@ -232,7 +186,7 @@ public class AuthAPITest {
     public void sessionCookieTest(TestContext context) throws Exception {
         final Async async = context.async();
 
-        client.getNow(PORT, "localhost", "/", response -> {
+        client.getNow(PORT, HOSTNAME, "/", response -> {
             context.assertEquals(200, response.statusCode());
 
             context.assertTrue(response.headers().get("Set-Cookie").contains("vertx-web.session"));
@@ -246,14 +200,14 @@ public class AuthAPITest {
     public void loginWorkingTest(TestContext context) throws Exception {
         final Async async = context.async();
 
-        HttpClientRequest req = client.get(PORT, "localhost", "/api/user/contacts", response -> { // TODO: Change to /api/user
+        HttpClientRequest req = client.get(PORT, HOSTNAME, "/api/user/contacts", response -> { // TODO: Change to /api/user
             context.assertEquals(200, response.statusCode());
 
             async.complete();
         });
 
-        if (cookies.get() != null) {
-            req.putHeader(COOKIE, cookies.get());
+        if (testClient.getCookies("alice") != null) {
+            req.putHeader(COOKIE, testClient.getCookies("alice"));
 
             req.end();
         } else {
@@ -265,7 +219,7 @@ public class AuthAPITest {
     public void loginRequiredTest(TestContext context) {
         final Async async = context.async();
 
-        client.getNow(PORT, "localhost", "/api/user/osfsfjgl", response -> {
+        client.getNow(PORT, HOSTNAME, "/api/user/osfsfjgl", response -> {
             context.assertEquals(403, response.statusCode());
 
             async.complete();
@@ -276,7 +230,7 @@ public class AuthAPITest {
     public void logInFailed(TestContext context) {
         final Async async = context.async();
 
-        HttpClientRequest req = client.post(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest req = client.post(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(401, response.statusCode());
 
             async.complete();
@@ -295,7 +249,7 @@ public class AuthAPITest {
     public void alreadyLoggedIn(TestContext context) {
         final Async async = context.async();
 
-        HttpClientRequest req = client.post(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest req = client.post(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(304, response.statusCode());
 
             async.complete();
@@ -307,8 +261,8 @@ public class AuthAPITest {
 
         req.putHeader("Content-Length", String.valueOf(formData.length()));
 
-        if (cookies.get() != null) {
-            req.putHeader(COOKIE, cookies.get());
+        if (testClient.getCookies("alice") != null) {
+            req.putHeader(COOKIE, testClient.getCookies("alice"));
         } else {
             assertTrue("Cookie not found.", false);
         }
@@ -320,7 +274,7 @@ public class AuthAPITest {
     public void logoutSuccess(TestContext context) {
         final Async async = context.async();
 
-        HttpClientRequest req = client.delete(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest req = client.delete(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(200, response.statusCode());
 
             loginRequiredTest(context);
@@ -330,8 +284,8 @@ public class AuthAPITest {
             async.complete();
         });
 
-        if (cookies.get() != null) {
-            req.putHeader(COOKIE, cookies.get());
+        if (testClient.getCookies("alice") != null) {
+            req.putHeader(COOKIE, testClient.getCookies("alice"));
         } else {
             assertTrue("Cookie not found.", false);
         }
@@ -343,7 +297,7 @@ public class AuthAPITest {
     public void logoutFailed(TestContext context) {
         final Async async = context.async();
 
-        HttpClientRequest req = client.delete(PORT, "localhost", "/api/auth", response -> {
+        HttpClientRequest req = client.delete(PORT, HOSTNAME, "/api/auth", response -> {
             context.assertEquals(403, response.statusCode());
 
             async.complete();

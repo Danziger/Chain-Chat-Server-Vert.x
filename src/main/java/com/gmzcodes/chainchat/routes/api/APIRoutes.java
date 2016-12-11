@@ -3,6 +3,7 @@ package com.gmzcodes.chainchat.routes.api;
 import com.gmzcodes.chainchat.routes.api.auth.AuthAPIRoutes;
 import com.gmzcodes.chainchat.routes.api.user.UserAPIRoutes;
 import com.gmzcodes.chainchat.store.ConversationsStore;
+import com.gmzcodes.chainchat.store.SessionsStore;
 import com.gmzcodes.chainchat.store.TokensStore;
 import com.gmzcodes.chainchat.store.UsersStore;
 
@@ -26,11 +27,11 @@ public final class APIRoutes {
 
     */
 
-    public static Router get(Vertx vertx, AuthProvider authProvider, ConversationsStore conversationsStore, TokensStore tokensStore, UsersStore usersStore) {
+    public static Router get(Vertx vertx, AuthProvider authProvider, ConversationsStore conversationsStore, SessionsStore sessionsStore, TokensStore tokensStore, UsersStore usersStore) {
         Router router = Router.router(vertx);
 
         router.mountSubRouter("/user", UserAPIRoutes.get(vertx));
-        router.mountSubRouter("/auth", AuthAPIRoutes.get(vertx, authProvider, conversationsStore, tokensStore, usersStore));
+        router.mountSubRouter("/auth", AuthAPIRoutes.get(vertx, authProvider, conversationsStore, sessionsStore, tokensStore, usersStore));
 
         return router;
     }

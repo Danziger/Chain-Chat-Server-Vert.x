@@ -18,28 +18,14 @@ public class ConversationsStore {
 
     private HashMap<String, List<Conversation>> conversationsByUser = new HashMap<String, List<Conversation>>();
 
-    public ConversationsStore() {
-        // TODO: This should be mocked!
+    public ConversationsStore() {}
 
-        Conversation aliceBob = new Conversation("alice", "bob");
-        Conversation aliceChris = new Conversation("alice", "chris");
-
-        List aliceConversartions = new Stack();
-        aliceConversartions.add(aliceBob);
-        aliceConversartions.add(aliceChris);
-
-        List bobConversartions = new Stack();
-        bobConversartions.add(aliceBob);
-
-        List chrisConversartions = new Stack();
-        chrisConversartions.add(aliceChris);
-
-        conversationsByUser.put("alice", aliceConversartions);
-        conversationsByUser.put("bob", bobConversartions);
-        conversationsByUser.put("chris", chrisConversartions);
-    }
+    // TODO: Implement remaining methods!
 
     public List<Conversation> get(String username) {
+
+        // TODO: Get conversations from users that haven't talked before!
+
         return conversationsByUser.get(username);
     }
 

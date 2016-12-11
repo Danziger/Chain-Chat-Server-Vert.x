@@ -1,11 +1,9 @@
 package com.gmzcodes.chainchat.handlers.websocket;
 
 import static com.gmzcodes.chainchat.constants.ExpectedValues.*;
-import static com.gmzcodes.chainchat.constants.ServerConfigValues.HOSTNAME;
-import static com.gmzcodes.chainchat.constants.ServerConfigValues.PATHNAME_WEBSOCKET;
 import static com.gmzcodes.chainchat.contants.WebSocketErrorMessagesConstants.*;
 import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
-import static io.vertx.core.http.HttpHeaders.COOKIE;
+import static junit.framework.TestCase.assertNull;
 
 import org.junit.After;
 import org.junit.Before;
@@ -16,13 +14,13 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.PhilTheServer;
+import com.gmzcodes.chainchat.bots.Bot;
+import com.gmzcodes.chainchat.store.BotsStore;
 import com.gmzcodes.chainchat.utils.TestClient;
-import com.gmzcodes.chainchat.utils.TestSetup;
+import com.gmzcodes.chainchat.utils.TestClientEndToEnd;
+import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.MultiMap;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -36,7 +34,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
 public class WebSocketValidationsBotTest {
-    private TestSetup testSetup;
+    private TestSetupEndToEnd testSetup;
     private TestClient testClient;
     private HttpClient client;
     private int PORT;
@@ -45,7 +43,7 @@ public class WebSocketValidationsBotTest {
     public void setUp(TestContext context) {
         final Async async = context.async();
 
-        testSetup = new TestSetup(context, ctx -> {
+        testSetup = new TestSetupEndToEnd(context, ctx -> {
             // GET CLIENTS:
 
             testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {
@@ -84,13 +82,11 @@ public class WebSocketValidationsBotTest {
     public void blockedByBotTest(TestContext context) {
         // 9. BLOCKED_BY_BOT
 
-        // TODO: This can only be unit-tested
-
         final Async async = context.async();
 
-        JsonObject req = testClient.getGenericMessage(USERNAME_ALICE, "@echobot");
+        JsonObject req = testClient.getGenericMessage(USERNAME_ALICE, "@blockbot");
 
-        // Valid message, but @invalidbot doesn't exists.
+        // Valid message, but @blockbot doesn't like people at all...
 
         testClient.send(context, client, USERNAME_ALICE, req, BLOCKED_BY_BOT, done -> async.complete());
     }

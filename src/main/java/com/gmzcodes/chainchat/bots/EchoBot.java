@@ -1,7 +1,5 @@
 package com.gmzcodes.chainchat.bots;
 
-import com.gmzcodes.chainchat.models.Bot;
-
 import io.vertx.core.json.JsonObject;
 
 /**

@@ -5,6 +5,7 @@ import com.gmzcodes.chainchat.models.Token;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.powermock.reflect.Whitebox;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
@@ -21,6 +22,9 @@ import java.util.UUID;
  */
 public class TokensStoreTest {
 
+    private final static int EXPECTED_TOKEN_LENGTH = 344;
+    private final static int MANY_RUNS = 4096;
+
     @Before
     public void setUp() {}
 
@@ -33,7 +37,14 @@ public class TokensStoreTest {
 
         List<String> usedTokenIds = new Stack<>();
 
-        for (int i = 0; i < 32; ++i) {
+        // PRE (this check doesn't belong to this test, but anyway it's better to check to avoid confusions if we find an error):
+
+        assertEquals(EXPECTED_TOKEN_LENGTH, (int) Whitebox.getInternalState(Token.class, "EXPECTED_TOKEN_LENGTH"));
+
+        // SOME ids could be 340 characters long, test should be executed this many times in order to be certain enough
+        // this has been implemented right!
+
+        for (int i = 0; i < MANY_RUNS; ++i) {
             String username = UUID.randomUUID().toString();
 
             Token token = tokensStore.generate(username);
@@ -42,7 +53,7 @@ public class TokensStoreTest {
 
             String tokenId = token.getId();
 
-            assertEquals(344, tokenId.length()); // Token ID should be 344 characters.
+            assertEquals(EXPECTED_TOKEN_LENGTH, tokenId.length()); // Token ID should be 344 characters.
 
             assertTrue(!usedTokenIds.contains(tokenId)); // In 32 randomly generated tokens none of them should be repeated!
 
@@ -56,6 +67,8 @@ public class TokensStoreTest {
             assertTrue(!tokensStore.verify("WRONG_ID", username)); // Validation WRONG, non-existing ID
 
             // INTERNAL STATE CHECKS:
+
+            // TODO: Update to use WhiteBox
 
             try {
                 Field tokensByIdField = tokensStore.getClass().getDeclaredField("tokensById");
