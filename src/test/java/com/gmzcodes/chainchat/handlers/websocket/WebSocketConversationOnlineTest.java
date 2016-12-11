@@ -1,8 +1,6 @@
 package com.gmzcodes.chainchat.handlers.websocket;
 
 import static com.gmzcodes.chainchat.constants.ExpectedValues.*;
-import static com.gmzcodes.chainchat.contants.WebSocketErrorMessagesConstants.INVALID_DESTINATION;
-import static com.gmzcodes.chainchat.contants.WebSocketErrorMessagesConstants.UNKNOWN_DESTINATION;
 
 import org.junit.After;
 import org.junit.Before;
@@ -14,11 +12,11 @@ import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.PhilTheServer;
 import com.gmzcodes.chainchat.utils.TestClient;
-import com.gmzcodes.chainchat.utils.TestSetup;
+import com.gmzcodes.chainchat.utils.TestClientEndToEnd;
+import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -30,7 +28,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
 public class WebSocketConversationOnlineTest {
-    private TestSetup testSetup;
+    private TestSetupEndToEnd testSetup;
     private TestClient testClient;
     private HttpClient client;
     private int PORT;
@@ -39,7 +37,7 @@ public class WebSocketConversationOnlineTest {
     public void setUp(TestContext context) {
         final Async async = context.async();
 
-        testSetup = new TestSetup(context, ctx -> {
+        testSetup = new TestSetupEndToEnd(context, ctx -> {
             // GET CLIENTS:
 
             testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {

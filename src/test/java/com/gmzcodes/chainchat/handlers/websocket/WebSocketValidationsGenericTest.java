@@ -17,7 +17,8 @@ import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.PhilTheServer;
 import com.gmzcodes.chainchat.utils.TestClient;
-import com.gmzcodes.chainchat.utils.TestSetup;
+import com.gmzcodes.chainchat.utils.TestClientEndToEnd;
+import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.MultiMap;
@@ -36,7 +37,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
 public class WebSocketValidationsGenericTest {
-    private TestSetup testSetup;
+    private TestSetupEndToEnd testSetup;
     private TestClient testClient;
     private HttpClient client;
     private int PORT;
@@ -45,7 +46,9 @@ public class WebSocketValidationsGenericTest {
     public void setUp(TestContext context) {
         final Async async = context.async();
 
-        testSetup = new TestSetup(context, ctx -> {
+        // TODO: Configure testClient to test end to end or unit!
+
+        testSetup = new TestSetupEndToEnd(context, ctx -> {
             // GET CLIENTS:
 
             testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {
@@ -76,7 +79,11 @@ public class WebSocketValidationsGenericTest {
         MultiMap headers = new CaseInsensitiveHeaders();
         headers.add(COOKIE, testClient.getCookies(USERNAME_ALICE));
 
-        HttpClient httpClient = client.websocket(PORT, HOSTNAME, PATHNAME_WEBSOCKET, headers, ws -> {
+        // TODO: Use test client
+
+        // TODO: Maybe test client can have client inside already!
+
+        client.websocket(PORT, HOSTNAME, PATHNAME_WEBSOCKET, headers, ws -> {
             ws.handler(buffer -> {
                 assertJsonEquals(context, MALFORMED_JSON, new JsonObject(buffer.toString()), false);
 

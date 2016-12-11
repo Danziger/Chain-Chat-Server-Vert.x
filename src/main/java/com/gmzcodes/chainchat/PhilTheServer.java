@@ -1,10 +1,10 @@
 package com.gmzcodes.chainchat;
 
+import com.gmzcodes.chainchat.bots.EchoBot;
+import com.gmzcodes.chainchat.bots.PingPongBot;
 import com.gmzcodes.chainchat.handlers.websocket.WebSocketHandler;
 import com.gmzcodes.chainchat.routes.api.APIRoutes;
-import com.gmzcodes.chainchat.store.ConversationsStore;
-import com.gmzcodes.chainchat.store.TokensStore;
-import com.gmzcodes.chainchat.store.UsersStore;
+import com.gmzcodes.chainchat.store.*;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -21,9 +21,12 @@ public class PhilTheServer extends AbstractVerticle {
 
     private final static int PORT = 8080;
 
+    private BotsStore botsStore = new BotsStore();
     private ConversationsStore conversationsStore = new ConversationsStore();
+    private SessionsStore sessionsStore = new SessionsStore();
     private TokensStore tokensStore = new TokensStore();
     private UsersStore usersStore = new UsersStore();
+    private WebSocketsStore webSocketsStore = new WebSocketsStore();
 
     // TODO LIST:
 
@@ -42,6 +45,17 @@ public class PhilTheServer extends AbstractVerticle {
     - TODO: ¿Cómo mockerar eso si se usan librearías? Imposible hacer tests...
 
      */
+
+    public PhilTheServer() {
+        BotsStore botsStore = this.botsStore = new BotsStore();
+
+        try {
+            botsStore.put("@ping", new PingPongBot());
+            botsStore.put("@echo", new EchoBot());
+        } catch (Exception duplicatedBotException) {
+            System.err.println("Bots initialization failed. Running without bots.");
+        }
+    }
 
     @Override
     public void start(Future<Void> fut) {
@@ -75,7 +89,7 @@ public class PhilTheServer extends AbstractVerticle {
             ctx.response().sendFile("webroot/index.html");
         });
 
-        router.mountSubRouter("/api", APIRoutes.get(vertx, authProvider, conversationsStore, tokensStore, usersStore));
+        router.mountSubRouter("/api", APIRoutes.get(vertx, authProvider, conversationsStore, sessionsStore, tokensStore, usersStore));
         // router.mountSubRouter("/static", AssetsRoutes.get(vertx, authProvider));
         // router.mountSubRouter("/ws", WebsocketRoutes.get(vertx, authProvider));
 
@@ -87,7 +101,7 @@ public class PhilTheServer extends AbstractVerticle {
         // Create the HTTP server and pass the "accept" method to the request handler.
         vertx
             .createHttpServer()
-            .websocketHandler(new WebSocketHandler(conversationsStore, tokensStore, usersStore))
+            .websocketHandler(new WebSocketHandler(botsStore, conversationsStore, sessionsStore, tokensStore, usersStore, webSocketsStore))
             .requestHandler(router::accept)
             .listen(
                     // Retrieve the port from the configuration,

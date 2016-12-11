@@ -1,5 +1,7 @@
 package com.gmzcodes.chainchat;
 
+import static com.gmzcodes.chainchat.constants.ExpectedValues.PASS_ALICE;
+import static com.gmzcodes.chainchat.constants.ExpectedValues.USERNAME_ALICE;
 import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
 import static io.vertx.core.http.HttpHeaders.COOKIE;
 import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
@@ -18,6 +20,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.constants.ExpectedValues;
+import com.gmzcodes.chainchat.utils.TestClient;
+import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
@@ -34,89 +38,37 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
 public class UserAPITest {
-
-    protected AtomicReference<String> cookies = new AtomicReference<>();
-
-    private int PORT = 8081;
-
-    private Vertx vertx;
-    private PhilTheServer philTheServer;
+    private TestSetupEndToEnd testSetup;
+    private TestClient testClient;
     private HttpClient client;
-
-    // TODO: Helper method/class for authenticated tests
+    private int PORT;
 
     @Before
     public void setUp(TestContext context) {
         final Async async = context.async();
 
-        vertx = Vertx.vertx();
+        // TODO: Configure testClient to test end to end or unit!
 
-        // Get random PORT:
+        testSetup = new TestSetupEndToEnd(context, ctx -> {
+            // GET CLIENTS:
 
-        try {
-            ServerSocket socket = new ServerSocket(0);
+            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {
+                context.assertEquals("alice@1", identifier);
 
-            PORT = socket.getLocalPort();
-
-            socket.close();
-        } catch (IOException e) { }
-
-        // Create config JSON:
-
-        JsonObject config = new JsonObject().put("http.port", PORT);
-
-        // Create options object from config JSON:
-
-        DeploymentOptions options = new DeploymentOptions()
-                .setConfig(config)
-                .setWorker(true); // Prevents thread blocked WARNING in tests.
-
-        // Create a client:
-
-        client = vertx.createHttpClient();
-
-        // Deploy Phil:
-
-        philTheServer = new PhilTheServer();
-
-        // Wait for Phil...
-
-        vertx.deployVerticle(philTheServer, options, ctx -> {
-
-            // Login handler:
-
-            HttpClientRequest req = client.post(PORT, "localhost", "/api/auth", response -> {
-                context.assertEquals(200, response.statusCode());
-
-                String setCookie = response.headers().get(SET_COOKIE);
-
-                context.assertNotNull(setCookie);
-
-                cookies.set(setCookie); // Keep session cookie for later
-
-                response.bodyHandler(body -> {
-                    assertJsonEquals(context, ExpectedValues.USER_ALICE, body.toJsonObject(), false);
-
-                    async.complete();
-                });
+                async.complete();
             });
-
-            // Login data:
-
-            String formData = "{ \"username\": \"alice\", \"password\": \"alice1234\" }";
-
-            req.putHeader("Content-Length", String.valueOf(formData.length()));
-            req.write(formData);
-
-            req.end();
         });
+
+        PORT = testSetup.getPort();
+        client = testSetup.getClient();
+        testClient = testSetup.getTestClient();
     }
 
     @After
     public void tearDown(TestContext context) {
-        client.close();
+        final Async async = context.async();
 
-        vertx.close(context.asyncAssertSuccess());
+        testSetup.kill(ctx -> async.complete());
     }
 
     @Test
@@ -135,8 +87,8 @@ public class UserAPITest {
             });
         });
 
-        if (cookies.get() != null) {
-            req.putHeader(COOKIE, cookies.get());
+        if (testClient.getCookies("alice") != null) {
+            req.putHeader(COOKIE, testClient.getCookies("alice"));
 
             req.end();
         } else {
@@ -160,8 +112,8 @@ public class UserAPITest {
             });
         });
 
-        if (cookies.get() != null) {
-            req.putHeader(COOKIE, cookies.get());
+        if (testClient.getCookies("alice") != null) {
+            req.putHeader(COOKIE, testClient.getCookies("alice"));
 
             req.end();
         } else {

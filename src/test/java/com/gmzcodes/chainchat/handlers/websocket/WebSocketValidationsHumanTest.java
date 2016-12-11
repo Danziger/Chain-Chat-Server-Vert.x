@@ -14,7 +14,8 @@ import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.PhilTheServer;
 import com.gmzcodes.chainchat.utils.TestClient;
-import com.gmzcodes.chainchat.utils.TestSetup;
+import com.gmzcodes.chainchat.utils.TestClientEndToEnd;
+import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.http.HttpClient;
@@ -30,7 +31,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
 @PrepareForTest({ PhilTheServer.class, AsyncResult.class })
 public class WebSocketValidationsHumanTest {
-    private TestSetup testSetup;
+    private TestSetupEndToEnd testSetup;
     private TestClient testClient;
     private HttpClient client;
 
@@ -38,7 +39,7 @@ public class WebSocketValidationsHumanTest {
     public void setUp(TestContext context) {
         final Async async = context.async();
 
-        testSetup = new TestSetup(context, ctx -> {
+        testSetup = new TestSetupEndToEnd(context, ctx -> {
             // GET CLIENTS:
 
             testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {

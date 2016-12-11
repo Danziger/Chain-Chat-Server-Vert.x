@@ -1,6 +1,7 @@
 package com.gmzcodes.chainchat.routes.api.auth;
 
 import com.gmzcodes.chainchat.store.ConversationsStore;
+import com.gmzcodes.chainchat.store.SessionsStore;
 import com.gmzcodes.chainchat.store.TokensStore;
 import com.gmzcodes.chainchat.store.UsersStore;
 
@@ -28,7 +29,7 @@ public final class AuthAPIRoutes {
 
     */
 
-    public static Router get(Vertx vertx, AuthProvider authProvider, ConversationsStore conversationsStore, TokensStore tokensStore, UsersStore usersStore) {
+    public static Router get(Vertx vertx, AuthProvider authProvider, ConversationsStore conversationsStore, SessionsStore sessionsStore, TokensStore tokensStore, UsersStore usersStore) {
         Router router = Router.router(vertx);
 
         router.route().consumes("application/json");
@@ -63,18 +64,21 @@ public final class AuthAPIRoutes {
             authProvider.authenticate(credentials, login -> {
                 if (login.failed()) {
                     ctx.fail(401); // 401 UNAUTHORIZED
+
                     return;
                 }
 
                 ctx.setUser(login.result());
 
-                System.out.println("SESSION ID = " + ctx.session().id());
+                sessionsStore.put(ctx.session().id(), username);
 
                 JsonObject response = usersStore.get(username);
                 response.put("conversations", conversationsStore.getJson(username));
                 response.put("token", tokensStore.generate(username).getId());
 
-                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(response.toString()); // TODO: Return user and all user data
+                // TODO: Return user and all user data (conversarions missing)
+
+                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(response.toString());
             });
         });
 
