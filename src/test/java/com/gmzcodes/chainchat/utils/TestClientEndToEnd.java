@@ -1,14 +1,11 @@
 package com.gmzcodes.chainchat.utils;
 
-import static com.gmzcodes.chainchat.constants.ServerConfigValues.HOSTNAME;
-import static com.gmzcodes.chainchat.constants.ServerConfigValues.PATHNAME_AUTHENTICATION;
-import static com.gmzcodes.chainchat.constants.ServerConfigValues.PATHNAME_WEBSOCKET;
+import static com.gmzcodes.chainchat.constants.ServerConfigValues.*;
 import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
 import static io.vertx.core.http.HttpHeaders.COOKIE;
 import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import com.gmzcodes.chainchat.constants.ExpectedValues;
 
@@ -35,7 +32,7 @@ public class TestClientEndToEnd extends TestClient {
 
     // MAIN FUNCTIONALITY:
 
-    public void login(TestContext context, HttpClient client, String username, String password, Handler<String> handler) {
+    public void login(TestContext context, HttpClient client, String username, String password, Handler<JsonObject> handler) {
         String clientId = normalizeClientId(username);
 
         final String currentIdentifier;
@@ -74,7 +71,6 @@ public class TestClientEndToEnd extends TestClient {
 
                 JsonObject jsonResponse = body.toJsonObject();
 
-                assertJsonEquals(context, ExpectedValues.USER_ALICE, jsonResponse, false);
                 context.assertTrue(jsonResponse.containsKey("token"));
 
                 String setToken = jsonResponse.getString("token");
@@ -92,7 +88,7 @@ public class TestClientEndToEnd extends TestClient {
                 System.out.println("│    COOKIE: " + setCookie);
                 System.out.println("└───────────────────────────────");
 
-                handler.handle(currentIdentifier);
+                handler.handle(jsonResponse);
             });
         });
 
@@ -123,6 +119,69 @@ public class TestClientEndToEnd extends TestClient {
             });
 
             ws.write(Buffer.buffer(req.toString()));
+        }, ws -> {
+            context.assertTrue(false);
+
+            handler.handle(null);
+        });
+    }
+
+    public void chat(TestContext context, HttpClient client, String clientId, List<JsonObject> messages, Handler<Object> handler) {
+        clientId = normalizeClientId(clientId);
+
+        MultiMap headers = new CaseInsensitiveHeaders();
+
+        headers.add(COOKIE, COOKIES.get(clientId));
+
+        boolean startSending = messages.get(0).getString("action").equals("send");
+
+        context.put("currentMessage", startSending ? 1 : 0);
+
+        // TODO: Add trace/verbose options!
+
+        client.websocket(PORT, HOSTNAME, PATHNAME_WEBSOCKET, headers, ws -> {
+            ws.handler(buffer -> {
+                int currentMessage = context.get("currentMessage");
+
+                if (messages.get(currentMessage).getString("action").equals("recv")) {
+                    System.out.println("\nRECV:");
+                    System.out.println(messages.get(currentMessage).getJsonObject("value"));
+                    System.out.println(new JsonObject(buffer.toString()));
+
+                    assertJsonEquals(context, messages.get(currentMessage).getJsonObject("value"), new JsonObject(buffer.toString()), false);
+                } else {
+                    System.out.println(currentMessage);
+                    System.out.println(messages.get(currentMessage));
+
+                    context.assertTrue(false);
+                }
+
+                ++currentMessage;
+
+                if (currentMessage == messages.size()) {
+                    ws.close();
+
+                    handler.handle(null);
+                } else {
+                    context.put("currentMessage", currentMessage);
+
+                    if (messages.get(currentMessage).getString("action").equals("send")) {
+                        System.out.println("\nSEND:");
+                        System.out.println(messages.get(currentMessage).getJsonObject("value").toString());
+
+                        context.put("currentMessage", currentMessage + 1);
+
+                        ws.write(Buffer.buffer(messages.get(currentMessage).getJsonObject("value").toString()));
+                    }
+                }
+            });
+
+            if (startSending) {
+                System.out.println("\nSEND:");
+                System.out.println(messages.get(0).getJsonObject("value").toString());
+
+                ws.write(Buffer.buffer(messages.get(0).getJsonObject("value").toString()));
+            }
         }, ws -> {
             context.assertTrue(false);
 

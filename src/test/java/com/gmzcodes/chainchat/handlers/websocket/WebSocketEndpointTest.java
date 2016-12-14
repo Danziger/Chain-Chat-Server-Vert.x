@@ -4,6 +4,7 @@ import static com.gmzcodes.chainchat.constants.ExpectedValues.PASS_ALICE;
 import static com.gmzcodes.chainchat.constants.ExpectedValues.USERNAME_ALICE;
 import static com.gmzcodes.chainchat.constants.ServerConfigValues.HOSTNAME;
 import static com.gmzcodes.chainchat.constants.ServerConfigValues.PATHNAME_WEBSOCKET;
+import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
 import static io.vertx.core.http.HttpHeaders.COOKIE;
 
 import org.junit.After;
@@ -15,14 +16,15 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.PhilTheServer;
+import com.gmzcodes.chainchat.constants.ExpectedValues;
 import com.gmzcodes.chainchat.utils.TestClient;
-import com.gmzcodes.chainchat.utils.TestClientEndToEnd;
 import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -46,8 +48,8 @@ public class WebSocketEndpointTest {
         testSetup = new TestSetupEndToEnd(context, ctx -> {
             // GET CLIENTS:
 
-            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {
-                context.assertEquals("alice@1", identifier);
+            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, loginResponseJson -> {
+                assertJsonEquals(context, ExpectedValues.USER_ALICE, loginResponseJson, false);
 
                 async.complete();
             });

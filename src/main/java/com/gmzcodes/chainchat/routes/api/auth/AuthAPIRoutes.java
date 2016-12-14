@@ -70,13 +70,15 @@ public final class AuthAPIRoutes {
 
                 ctx.setUser(login.result());
 
-                sessionsStore.put(ctx.session().id(), username);
+                try {
+                    sessionsStore.putSession(ctx.session().id(), username);
+                } catch (Exception e) {
+                    ctx.fail(500); // 500 INTERNAL SERVER ERROR // TODO: Test this
+                }
 
                 JsonObject response = usersStore.get(username);
                 response.put("conversations", conversationsStore.getJson(username));
                 response.put("token", tokensStore.generate(username).getId());
-
-                // TODO: Return user and all user data (conversarions missing)
 
                 ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(response.toString());
             });

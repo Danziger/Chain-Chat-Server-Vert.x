@@ -47,7 +47,7 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
 
     public void handle(final ServerWebSocket ws) {
         if (ws.path().equals("/eventbus")) {
-            String username = sessionsStore.get(ws.headers().get(COOKIE).split("session=")[1].split(";")[0]);
+            String username = sessionsStore.getUsername(ws.headers().get(COOKIE).split("session=")[1].split(";")[0]);
 
             webSocketsStore.put(username, ws);
 
@@ -72,7 +72,7 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
 
                 //  12. INVALID_MESSAGE_TYPE
 
-                final JsonObject message;
+                JsonObject message;
 
                 try {
                     message = new JsonObject(data.toString());
@@ -87,7 +87,7 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
                 final String to = message.containsKey("to") ? message.getString("to") : "";
                 final String timestamp = message.containsKey("timestamp") ? message.getString("timestamp") : "";
 
-                // TODO: Check that to matches username
+                // TODO: Check that "to" matches username
 
                 if (token.isEmpty()) { // 2
                     ws.writeFinalTextFrame(MISSING_TOKEN.toString());
@@ -147,8 +147,16 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
 
                 final String type = message.containsKey("type") ? message.getString("type") : "";
 
+                message.remove("token"); // TODO: Test this!!
+
                 switch(type) {
                     case "msg":
+                        // TODO: Test with conversations in store (add that test data).
+
+                        // TODO: Test offline user messages go to the store.
+
+                        // TODO: add server ack in message
+
                         // TODO: Send ACK_SERVER
 
                         // TODO: Replay message to other instances (including ACK)
@@ -157,8 +165,12 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
 
                         // TODO: Forward to destination
 
+                        // TODO: Should send to multiple to's (group or multiple instances) and replay to multiple from's!
+
                         // response.put("type", "ack");
                         // response.put("value", message.getString("timestamp"));
+
+                        message = conversationsStore.get(from, to).putMessage(message);
 
                         if (isBot) {
                             // ACK ACK should go in same message!
@@ -166,10 +178,10 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
                             response = botsStore.get(to).talk(message);
 
                         } else {
-                            response = new JsonObject();
+                            response = new JsonObject()
+                                    .put("type", "stored")
+                                    .put("value", message.getString("id"));
                         }
-
-                        // TODO: ACKs should include message ID!
 
                         break;
 

@@ -1,9 +1,10 @@
 package com.gmzcodes.chainchat.handlers.websocket;
 
-import static com.gmzcodes.chainchat.constants.ExpectedValues.*;
-import static com.gmzcodes.chainchat.contants.WebSocketErrorMessagesConstants.*;
+import static com.gmzcodes.chainchat.constants.ExpectedValues.PASS_ALICE;
+import static com.gmzcodes.chainchat.constants.ExpectedValues.USERNAME_ALICE;
+import static com.gmzcodes.chainchat.contants.WebSocketErrorMessagesConstants.BLOCKED_BY_BOT;
+import static com.gmzcodes.chainchat.contants.WebSocketErrorMessagesConstants.INVALID_BOT;
 import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
-import static junit.framework.TestCase.assertNull;
 
 import org.junit.After;
 import org.junit.Before;
@@ -14,10 +15,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.PhilTheServer;
-import com.gmzcodes.chainchat.bots.Bot;
-import com.gmzcodes.chainchat.store.BotsStore;
+import com.gmzcodes.chainchat.constants.ExpectedValues;
 import com.gmzcodes.chainchat.utils.TestClient;
-import com.gmzcodes.chainchat.utils.TestClientEndToEnd;
 import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
@@ -46,8 +45,8 @@ public class WebSocketValidationsBotTest {
         testSetup = new TestSetupEndToEnd(context, ctx -> {
             // GET CLIENTS:
 
-            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {
-                context.assertEquals("alice@1", identifier);
+            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, loginResponseJson -> {
+                assertJsonEquals(context, ExpectedValues.USER_ALICE, loginResponseJson, false);
 
                 async.complete();
             });

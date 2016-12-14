@@ -17,14 +17,7 @@ import io.vertx.ext.unit.TestContext;
 public class TestSetupWebSocketHandlerUnit extends TestSetup {
     // Test subject:
 
-    private final WebSocketHandler webSocketHandler = new WebSocketHandler(
-            BOTS_STORE,
-            CONVERSATIONS_STORE,
-            SESSIONS_STORE,
-            TOKENS_STORE,
-            USERS_STORE,
-            WEB_SOCKETS_STORE
-    );
+    private final WebSocketHandler webSocketHandler;
 
     // Test client:
 
@@ -33,6 +26,22 @@ public class TestSetupWebSocketHandlerUnit extends TestSetup {
     // CONSTRUCTORS:
 
     public TestSetupWebSocketHandlerUnit(TestContext context, Handler<AsyncResult<String>> ctx) {
+        final BotsStore BOTS_STORE = BOTS_STORE();
+        final ConversationsStore CONVERSATIONS_STORE = CONVERSATIONS_STORE();
+        final SessionsStore SESSIONS_STORE = SESSIONS_STORE();
+        final TokensStore TOKENS_STORE = TOKENS_STORE();
+        final UsersStore USERS_STORE = USERS_STORE();
+        final WebSocketsStore WEB_SOCKETS_STORE = WEB_SOCKETS_STORE();
+
+        webSocketHandler = new WebSocketHandler(
+                BOTS_STORE,
+                CONVERSATIONS_STORE,
+                SESSIONS_STORE,
+                TOKENS_STORE,
+                USERS_STORE,
+                WEB_SOCKETS_STORE
+        );
+
         // This client needs to fake the logging data in the stores, therefor it needs a reference to them:
 
         testClient = new TestClientWebSocketHandlerUnit(
@@ -116,5 +125,29 @@ public class TestSetupWebSocketHandlerUnit extends TestSetup {
 
     public void setWebSocketsStore(WebSocketsStore webSocketsStore) {
         Whitebox.setInternalState(webSocketHandler, "webSocketsStore", webSocketsStore);
+    }
+
+    public BotsStore getBotsStore() {
+        return Whitebox.getInternalState(webSocketHandler, "botsStore");
+    }
+
+    public ConversationsStore getConversationsStore() {
+        return Whitebox.getInternalState(webSocketHandler, "conversationsStore");
+    }
+
+    public SessionsStore getSessionsStore() {
+        return Whitebox.getInternalState(webSocketHandler, "sessionsStore");
+    }
+
+    public TokensStore getTokensStore() {
+        return Whitebox.getInternalState(webSocketHandler, "tokensStore");
+    }
+
+    public UsersStore getUsersStore() {
+        return Whitebox.getInternalState(webSocketHandler, "usersStore");
+    }
+
+    public WebSocketsStore getWebSocketsStore() {
+        return Whitebox.getInternalState(webSocketHandler, "webSocketsStore");
     }
 }

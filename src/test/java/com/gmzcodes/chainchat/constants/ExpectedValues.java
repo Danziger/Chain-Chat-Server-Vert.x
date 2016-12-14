@@ -17,24 +17,26 @@ public final class ExpectedValues {
     public static final String PASS_BOB = "bob1234";
     public static final String PASS_CHRIS = "chris1234";
 
+    // TODO: Sync with DefaultStoreValues!
+
     public static final JsonObject USER_ALICE = new JsonObject()
             .put("username", USERNAME_ALICE)
             .put("name", "Alice Clinton")
-            .put("contacts", new JsonArray().add("bob").add("chris"))
-            .put("conversations", new JsonArray())
+            .put("contacts", new JsonArray().add("bob").add("chris").add("francis"))
+            .put("conversations", new JsonObject())
             .put("token", "@PRESENT");
 
     public static final JsonObject USER_BOB = new JsonObject()
             .put("username", USERNAME_BOB)
             .put("name", "Bob Trump")
             .put("contacts", new JsonArray().add("alice"))
-            .put("conversations", new JsonArray())
+            .put("conversations", new JsonObject())
             .put("token", "@PRESENT");
 
     public static final JsonObject USER_CHRIS = new JsonObject()
             .put("username", USERNAME_CHRIS)
             .put("name", "Chris Sambora")
             .put("contacts", new JsonArray().add("alice"))
-            .put("conversations", new JsonArray())
+            .put("conversations", new JsonObject())
             .put("token", "@PRESENT");
 }

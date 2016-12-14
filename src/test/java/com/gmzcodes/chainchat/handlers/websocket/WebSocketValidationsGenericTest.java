@@ -16,8 +16,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.PhilTheServer;
+import com.gmzcodes.chainchat.constants.ExpectedValues;
 import com.gmzcodes.chainchat.utils.TestClient;
-import com.gmzcodes.chainchat.utils.TestClientEndToEnd;
 import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
@@ -51,8 +51,8 @@ public class WebSocketValidationsGenericTest {
         testSetup = new TestSetupEndToEnd(context, ctx -> {
             // GET CLIENTS:
 
-            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {
-                context.assertEquals("alice@1", identifier);
+            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, loginResponseJson -> {
+                assertJsonEquals(context, ExpectedValues.USER_ALICE, loginResponseJson, false);
 
                 async.complete();
             });

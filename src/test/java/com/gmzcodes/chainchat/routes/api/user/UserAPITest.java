@@ -1,15 +1,10 @@
-package com.gmzcodes.chainchat;
+package com.gmzcodes.chainchat.routes.api.user;
 
 import static com.gmzcodes.chainchat.constants.ExpectedValues.PASS_ALICE;
 import static com.gmzcodes.chainchat.constants.ExpectedValues.USERNAME_ALICE;
 import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
 import static io.vertx.core.http.HttpHeaders.COOKIE;
-import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
 import static junit.framework.TestCase.assertTrue;
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.Before;
@@ -19,13 +14,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
+import com.gmzcodes.chainchat.PhilTheServer;
 import com.gmzcodes.chainchat.constants.ExpectedValues;
 import com.gmzcodes.chainchat.utils.TestClient;
 import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.json.JsonArray;
@@ -52,8 +46,8 @@ public class UserAPITest {
         testSetup = new TestSetupEndToEnd(context, ctx -> {
             // GET CLIENTS:
 
-            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, identifier -> {
-                context.assertEquals("alice@1", identifier);
+            testClient.login(context, client, USERNAME_ALICE, PASS_ALICE, loginResponseJson -> {
+                assertJsonEquals(context, ExpectedValues.USER_ALICE, loginResponseJson, false);
 
                 async.complete();
             });

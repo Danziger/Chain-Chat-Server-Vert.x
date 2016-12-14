@@ -1,37 +1,65 @@
 package com.gmzcodes.chainchat.store;
 
-import java.nio.file.StandardWatchEventKinds;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Stack;
 
 import com.gmzcodes.chainchat.models.Conversation;
-import com.gmzcodes.chainchat.models.Token;
 
-import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Created by danigamez on 09/11/2016.
  */
 public class ConversationsStore {
 
-    private HashMap<String, List<Conversation>> conversationsByUser = new HashMap<String, List<Conversation>>();
+    // TODO: Update to https://commons.apache.org/proper/commons-collections/apidocs/org/apache/commons/collections4/map/MultiKeyMap.html
+
+    private HashMap<String, List<Conversation>> conversationsByUser = new HashMap<>();
+    private HashMap<String, Conversation> conversationsById = new HashMap<>();
 
     public ConversationsStore() {}
 
-    // TODO: Implement remaining methods!
+    public Conversation get(String... usernames) {
+        String roomId = Conversation.buildRoomId(usernames);
 
-    public List<Conversation> get(String username) {
+        if (conversationsById.containsKey(roomId)) {
+            return conversationsById.get(roomId);
+        } else {
+            Conversation conversation = new Conversation(usernames);
 
-        // TODO: Get conversations from users that haven't talked before!
+            conversationsById.put(conversation.getRoomId(), conversation);
 
-        return conversationsByUser.get(username);
+            for (String username : usernames) {
+                if (conversationsByUser.containsKey(username)) {
+                    conversationsByUser.get(username).add(conversation);
+                } else {
+                    List<Conversation> conversations = new ArrayList<>();
+
+                    conversations.add(conversation);
+                    conversationsByUser.put(username, conversations);
+                }
+            }
+
+            return conversation;
+        }
     }
 
-    public JsonArray getJson(String username) {
-        // TODO: Iterate conversationsByUser.get(username) and build JsonArray!
+    public JsonObject getJson(String username) {
+        if (conversationsByUser.containsKey(username)) {
+            JsonObject conversationsJson = new JsonObject();
 
-        return new JsonArray();
+            for (Conversation conversation : conversationsByUser.get(username)) {
+                try {
+                    conversationsJson.put(conversation.getRoomIdForUser(username), conversation.toJson());
+                } catch (Exception e) {
+                    // Skip that user...
+                }
+            }
+
+            return conversationsJson;
+        } else {
+            return new JsonObject();
+        }
     }
 }

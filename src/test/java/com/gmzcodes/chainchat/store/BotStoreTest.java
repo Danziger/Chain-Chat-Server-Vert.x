@@ -37,7 +37,7 @@ public class BotStoreTest {
 
         // ACTION: Get non-existing bot.
 
-        Bot bot1 = bots.get("bot1");
+        Bot bot1 = botsStore.get("bot1");
 
         // RESULTS:
 
@@ -121,6 +121,8 @@ public class BotStoreTest {
 
         try {
             botsStore.put("bot1", bot1);
+
+            assertTrue(false);
         } catch (Exception e) {
             assertTrue(true);
         }
@@ -178,6 +180,8 @@ public class BotStoreTest {
 
         try {
             botsStore.put("bot1", bot2);
+
+            assertTrue(false);
         } catch (Exception e) {
             assertTrue(true);
         }
@@ -228,7 +232,7 @@ public class BotStoreTest {
         try {
             botsStore.put("bot2", bot1);
         } catch (Exception e) {
-            assertTrue(true);
+            assertTrue(false);
         }
 
         // RESULTS:

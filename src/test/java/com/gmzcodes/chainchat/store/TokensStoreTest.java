@@ -1,14 +1,6 @@
 package com.gmzcodes.chainchat.store;
 
-import com.gmzcodes.chainchat.store.TokensStore;
-import com.gmzcodes.chainchat.models.Token;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.powermock.reflect.Whitebox;
-
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 import java.lang.reflect.Field;
@@ -16,6 +8,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 import java.util.UUID;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.powermock.reflect.Whitebox;
+
+import com.gmzcodes.chainchat.models.Token;
 
 /**
  * Created by Raul on 10/11/2016.
