@@ -1,6 +1,7 @@
 package com.gmzcodes.chainchat.utils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.vertx.core.Handler;
@@ -17,8 +18,10 @@ public abstract class TestClient {
 
     // MAIN FUNCTIONALITY:
 
-    public abstract void login(TestContext context, HttpClient client, String username, String password, Handler<String> handler);
+    public abstract void login(TestContext context, HttpClient client, String username, String password, Handler<JsonObject> handler);
+    @Deprecated
     public abstract void send(TestContext context, HttpClient client, String clientId, JsonObject req, JsonObject res, Handler<Object> handler);
+    public abstract void chat(TestContext context, HttpClient client, String clientId, List<JsonObject> messages, Handler<Object> handler);
 
     // GETTERS:
 

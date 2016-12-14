@@ -1,12 +1,8 @@
 package com.gmzcodes.chainchat;
 
-import static org.powermock.api.support.membermodification.MemberMatcher.method;
-import static org.powermock.api.support.membermodification.MemberModifier.stub;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 
-import io.vertx.core.http.HttpClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

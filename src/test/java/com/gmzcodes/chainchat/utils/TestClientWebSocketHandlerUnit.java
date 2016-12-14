@@ -1,5 +1,7 @@
 package com.gmzcodes.chainchat.utils;
 
+import java.util.List;
+
 import com.gmzcodes.chainchat.store.SessionsStore;
 import com.gmzcodes.chainchat.store.TokensStore;
 import com.gmzcodes.chainchat.store.UsersStore;
@@ -24,12 +26,17 @@ public class TestClientWebSocketHandlerUnit extends TestClient {
     }
 
     @Override
-    public void login(TestContext context, HttpClient client, String username, String password, Handler<String> handler) {
+    public void login(TestContext context, HttpClient client, String username, String password, Handler<JsonObject> handler) {
 
     }
 
     @Override
     public void send(TestContext context, HttpClient client, String clientId, JsonObject req, JsonObject res, Handler<Object> handler) {
+
+    }
+
+    @Override
+    public void chat(TestContext context, HttpClient client, String clientId, List<JsonObject> messages, Handler<Object> handler) {
 
     }
 }

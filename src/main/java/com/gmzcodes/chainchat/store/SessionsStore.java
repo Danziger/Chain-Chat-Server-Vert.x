@@ -15,12 +15,14 @@ public class SessionsStore {
 
     public SessionsStore() {}
 
-    public String get(String sessionId) {
+    public String getUsername(String sessionId) {
         return usernameBySessionId.containsKey(sessionId) ? usernameBySessionId.get(sessionId) : null;
     }
 
-    public void put(String sessionId, String username) {
-        // TODO: Check if already there?
+    public void putSession(String sessionId, String username) throws Exception {
+        if (usernameBySessionId.containsKey(sessionId)) {
+            throw new Exception("Session with ID = " + sessionId + " already exists.");
+        }
 
         usernameBySessionId.put(sessionId, username);
     }

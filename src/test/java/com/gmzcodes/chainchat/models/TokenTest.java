@@ -1,17 +1,17 @@
 package com.gmzcodes.chainchat.models;
 
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.powermock.reflect.Whitebox;
-
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 import java.util.List;
 import java.util.Stack;
 import java.util.UUID;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.powermock.reflect.Whitebox;
 
 /**
  * Created by Raul on 10/11/2016.

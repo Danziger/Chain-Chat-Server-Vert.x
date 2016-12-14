@@ -21,14 +21,7 @@ import io.vertx.core.json.JsonObject;
 public final class DefaultStoresValues {
     private DefaultStoresValues() {}
 
-    public final static BotsStore BOTS_STORE = initializeBotsStore();
-    public final static ConversationsStore CONVERSATIONS_STORE = initializeConversationsStore();
-    public final static SessionsStore SESSIONS_STORE = initializeSessionsStore();
-    public final static TokensStore TOKENS_STORE = initializeTokensStore();
-    public final static UsersStore USERS_STORE = initializeUsersStore();
-    public final static WebSocketsStore WEB_SOCKETS_STORE = initializeWebSocketsStore();
-
-    private static BotsStore initializeBotsStore() {
+    public static BotsStore BOTS_STORE() {
         BotsStore botsStore = new BotsStore();
 
         try {
@@ -53,50 +46,25 @@ public final class DefaultStoresValues {
         return botsStore;
     }
 
-    private static ConversationsStore initializeConversationsStore() {
+    public static ConversationsStore CONVERSATIONS_STORE() {
         ConversationsStore conversationsStore = new ConversationsStore();
-
-        Conversation aliceBob = new Conversation("alice", "bob");
-        Conversation aliceChris = new Conversation("alice", "chris");
-
-        List aliceConversations = new Stack();
-        aliceConversations.add(aliceBob);
-        aliceConversations.add(aliceChris);
-
-        List bobConversartions = new Stack();
-        bobConversartions.add(aliceBob);
-
-        List chrisConversartions = new Stack();
-        chrisConversartions.add(aliceChris);
-
-        HashMap<String, List<Conversation>> conversationsByUser = new HashMap<String, List<Conversation>>();
-
-        conversationsByUser.put("alice", aliceConversations);
-        conversationsByUser.put("bob", bobConversartions);
-        conversationsByUser.put("chris", chrisConversartions);
-
-        Whitebox.setInternalState(conversationsStore, "conversationsByUser", conversationsByUser);
-
-        // TODO: Mock some messages!
-
-        // TODO: Test users that have talked before and some others than haven't!
 
         return conversationsStore;
     }
 
-    private static SessionsStore initializeSessionsStore() {
+    public static SessionsStore SESSIONS_STORE() {
         SessionsStore sessionsStore = new SessionsStore();
 
         return sessionsStore;
     }
 
-    private static TokensStore initializeTokensStore() {
+    public static TokensStore TOKENS_STORE() {
         TokensStore tokensStore = new TokensStore();
 
         return tokensStore;
     }
 
-    private static UsersStore initializeUsersStore() {
+    public static UsersStore USERS_STORE() {
         UsersStore usersStore = new UsersStore();
 
         JsonObject users = new JsonObject();
@@ -126,7 +94,7 @@ public final class DefaultStoresValues {
         return usersStore;
     }
 
-    private static WebSocketsStore initializeWebSocketsStore() {
+    public static WebSocketsStore WEB_SOCKETS_STORE() {
         WebSocketsStore webSocketsStore = new WebSocketsStore();
 
         return webSocketsStore;

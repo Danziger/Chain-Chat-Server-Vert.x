@@ -1,6 +1,5 @@
 package com.gmzcodes.chainchat.store;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**

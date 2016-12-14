@@ -42,6 +42,13 @@ public class TestSetupEndToEnd extends TestSetup {
     }
 
     public TestSetupEndToEnd(TestContext context, Handler<AsyncResult<String>> ctx, boolean reinjectStores) {
+        final BotsStore BOTS_STORE = BOTS_STORE();
+        final ConversationsStore CONVERSATIONS_STORE = CONVERSATIONS_STORE();
+        final SessionsStore SESSIONS_STORE = SESSIONS_STORE();
+        final TokensStore TOKENS_STORE = TOKENS_STORE();
+        final UsersStore USERS_STORE = USERS_STORE();
+        final WebSocketsStore WEB_SOCKETS_STORE = WEB_SOCKETS_STORE();
+
         try {
             // Try to get a random PORT:
 
@@ -118,6 +125,30 @@ public class TestSetupEndToEnd extends TestSetup {
 
     public void setWebSocketsStore(WebSocketsStore webSocketsStore) {
         Whitebox.setInternalState(philTheServer, "webSocketsStore", webSocketsStore);
+    }
+
+    public BotsStore getBotsStore() {
+        return Whitebox.getInternalState(philTheServer, "botsStore");
+    }
+
+    public ConversationsStore getConversationsStore() {
+        return Whitebox.getInternalState(philTheServer, "conversationsStore");
+    }
+
+    public SessionsStore getSessionsStore() {
+        return Whitebox.getInternalState(philTheServer, "sessionsStore");
+    }
+
+    public TokensStore getTokensStore() {
+        return Whitebox.getInternalState(philTheServer, "tokensStore");
+    }
+
+    public UsersStore getUsersStore() {
+        return Whitebox.getInternalState(philTheServer, "usersStore");
+    }
+
+    public WebSocketsStore getWebSocketsStore() {
+        return Whitebox.getInternalState(philTheServer, "webSocketsStore");
     }
 
     // TEST SETUP END TO END SPECIFIC:
