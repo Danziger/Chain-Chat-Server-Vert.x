@@ -100,27 +100,27 @@ public class WebSocketConversationOfflineTest {
     public void oneChatStoredAckAndLoginAfterwardsTest(TestContext context) {
         final Async async = context.async();
 
-        JsonObject req = testClient.getGenericMessage(USERNAME_ALICE, USERNAME_BOB);
+        JsonObject msg = testClient.getGenericMessage(USERNAME_ALICE, USERNAME_BOB);
         JsonObject ackResponse1 = new JsonObject()
                 .put("type", "stored")
-                .put("value", USERNAME_ALICE + "::" + req.getString("timestamp")); // TODO: Use helper function!
+                .put("value", USERNAME_ALICE + "::" + msg.getString("timestamp")); // TODO: Use helper function!
         JsonObject ackResponse2 = new JsonObject()
                 .put("type", "stored")
-                .put("value", USERNAME_ALICE + "::" + req.getString("timestamp") + ".1"); // TODO: Use helper function!
+                .put("value", USERNAME_ALICE + "::" + msg.getString("timestamp") + ".1"); // TODO: Use helper function!
 
         List<JsonObject> conversation = new ArrayList<>();
 
-        conversation.add(new JsonObject().put("action", "send").put("value", req));
+        conversation.add(new JsonObject().put("action", "send").put("value", msg));
         conversation.add(new JsonObject().put("action", "recv").put("value", ackResponse1));
-        conversation.add(new JsonObject().put("action", "send").put("value", req));
+        conversation.add(new JsonObject().put("action", "send").put("value", msg));
         conversation.add(new JsonObject().put("action", "recv").put("value", ackResponse2));
 
         testClient.chat(context, client, USERNAME_ALICE, conversation, done -> {
             context.assertEquals(2, testSetup.getConversationsStore().get(USERNAME_ALICE, USERNAME_BOB).toJson().size());
 
-            JsonObject storedReq1 = req.copy().put("id", "alice::2016.10.10.12.00.00.000");
+            JsonObject storedReq1 = msg.copy().put("id", "alice::2016.10.10.12.00.00.000");
             storedReq1.remove("token");
-            JsonObject storedReq2 = req.copy().put("id", "alice::2016.10.10.12.00.00.000.1");
+            JsonObject storedReq2 = msg.copy().put("id", "alice::2016.10.10.12.00.00.000.1");
             storedReq2.remove("token");
 
             context.assertEquals(storedReq1, testSetup.getConversationsStore().get(USERNAME_ALICE, USERNAME_BOB).toJson().getJsonObject(0));

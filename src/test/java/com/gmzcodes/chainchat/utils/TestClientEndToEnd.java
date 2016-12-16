@@ -127,31 +127,28 @@ public class TestClientEndToEnd extends TestClient {
     }
 
     public void chat(TestContext context, HttpClient client, String clientId, List<JsonObject> messages, Handler<Object> handler) {
-        clientId = normalizeClientId(clientId);
+        final String finalClientId = normalizeClientId(clientId);
 
         MultiMap headers = new CaseInsensitiveHeaders();
 
-        headers.add(COOKIE, COOKIES.get(clientId));
+        headers.add(COOKIE, COOKIES.get(finalClientId));
 
         boolean startSending = messages.get(0).getString("action").equals("send");
 
-        context.put("currentMessage", startSending ? 1 : 0);
+        context.put("currentMessage" + finalClientId, startSending ? 1 : 0);
 
         // TODO: Add trace/verbose options!
 
         client.websocket(PORT, HOSTNAME, PATHNAME_WEBSOCKET, headers, ws -> {
             ws.handler(buffer -> {
-                int currentMessage = context.get("currentMessage");
+                int currentMessage = context.get("currentMessage" + finalClientId);
 
                 if (messages.get(currentMessage).getString("action").equals("recv")) {
-                    System.out.println("\nRECV:");
-                    System.out.println(messages.get(currentMessage).getJsonObject("value"));
-                    System.out.println(new JsonObject(buffer.toString()));
+                    System.out.println("\nRECV: " + finalClientId + ":\n" + messages.get(currentMessage).getJsonObject("value") + "\n" + new JsonObject(buffer.toString()));
 
                     assertJsonEquals(context, messages.get(currentMessage).getJsonObject("value"), new JsonObject(buffer.toString()), false);
                 } else {
-                    System.out.println(currentMessage);
-                    System.out.println(messages.get(currentMessage));
+                    System.out.println("\nFAIL: " + finalClientId + ":\n" + currentMessage + "\n" + messages.get(currentMessage));
 
                     context.assertTrue(false);
                 }
@@ -163,24 +160,24 @@ public class TestClientEndToEnd extends TestClient {
 
                     handler.handle(null);
                 } else {
-                    context.put("currentMessage", currentMessage);
+                    context.put("currentMessage" + finalClientId, currentMessage);
 
-                    if (messages.get(currentMessage).getString("action").equals("send")) {
-                        System.out.println("\nSEND:");
-                        System.out.println(messages.get(currentMessage).getJsonObject("value").toString());
-
-                        context.put("currentMessage", currentMessage + 1);
+                    while (currentMessage < messages.size() && messages.get(currentMessage).getString("action").equals("send")) {
+                        System.out.println("\nSEND: " + finalClientId + ":\n" + messages.get(currentMessage).getJsonObject("value").toString());
 
                         ws.write(Buffer.buffer(messages.get(currentMessage).getJsonObject("value").toString()));
+
+                        context.put("currentMessage" + finalClientId, ++currentMessage);
                     }
                 }
             });
 
             if (startSending) {
-                System.out.println("\nSEND:");
-                System.out.println(messages.get(0).getJsonObject("value").toString());
+                System.out.println("\nSTART: " + finalClientId + ":\n" + messages.get(0).getJsonObject("value").toString());
 
                 ws.write(Buffer.buffer(messages.get(0).getJsonObject("value").toString()));
+            } else {
+                System.out.println("\nWAIT: " + finalClientId + "... ");
             }
         }, ws -> {
             context.assertTrue(false);

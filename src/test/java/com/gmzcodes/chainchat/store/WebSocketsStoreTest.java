@@ -284,5 +284,7 @@ public class WebSocketsStoreTest {
         // POST:
 
         assertEquals(0, websocketsByUsername.size());
+        assertFalse(webSocketsStore.remove("user1", mock(ServerWebSocket.class)));
+        assertFalse(webSocketsStore.remove("user2", mock(ServerWebSocket.class)));
     }
 }

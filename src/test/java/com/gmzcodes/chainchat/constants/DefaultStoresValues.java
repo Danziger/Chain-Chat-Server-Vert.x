@@ -30,8 +30,8 @@ public final class DefaultStoresValues {
 
             botsStore.put("@blockbot", new Bot() {
                 @Override
-                public JsonObject talk(JsonObject message) {
-                    return new JsonObject();
+                public String talk(String username, String message) {
+                    return "";
                 }
 
                 @Override
