@@ -7,6 +7,9 @@ import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
 import static io.vertx.core.http.HttpHeaders.COOKIE;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.TimeoutException;
 
@@ -19,6 +22,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.constants.ExpectedValues;
+import com.gmzcodes.chainchat.store.SessionsStore;
 import com.gmzcodes.chainchat.utils.TestClient;
 import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
@@ -294,6 +298,35 @@ public class AuthAPITest {
 
             async.complete();
         });
+
+        req.end();
+    }
+
+    @Test
+    public void duplicatedSessionError(TestContext context) {
+        final Async async = context.async();
+
+        SessionsStore sessionsStoreMock = mock(SessionsStore.class);
+
+        try {
+            doThrow(new Exception()).when(sessionsStoreMock).putSession(anyString(), anyString());
+        } catch (Exception e) {
+            assertTrue(false);
+        }
+
+        testSetup.setSessionsStore(sessionsStoreMock);
+
+        HttpClientRequest req = client.delete(PORT, HOSTNAME, "/api/auth", response -> {
+            context.assertEquals(500, response.statusCode());
+
+            async.complete();
+        });
+
+        if (testClient.getCookies("alice") != null) {
+            req.putHeader(COOKIE, testClient.getCookies("alice"));
+        } else {
+            assertTrue("Cookie not found.", false);
+        }
 
         req.end();
     }

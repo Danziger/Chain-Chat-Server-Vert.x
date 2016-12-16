@@ -73,7 +73,9 @@ public final class AuthAPIRoutes {
                 try {
                     sessionsStore.putSession(ctx.session().id(), username);
                 } catch (Exception e) {
-                    ctx.fail(500); // 500 INTERNAL SERVER ERROR // TODO: Test this
+                    ctx.fail(500); // 500 INTERNAL SERVER ERROR
+
+                    return;
                 }
 
                 JsonObject response = usersStore.get(username);

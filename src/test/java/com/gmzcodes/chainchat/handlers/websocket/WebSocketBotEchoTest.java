@@ -1,8 +1,8 @@
 package com.gmzcodes.chainchat.handlers.websocket;
 
-import static com.gmzcodes.chainchat.constants.ExpectedValues.PASS_ALICE;
-import static com.gmzcodes.chainchat.constants.ExpectedValues.USERNAME_ALICE;
+import static com.gmzcodes.chainchat.constants.ExpectedValues.*;
 import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +19,7 @@ import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -62,29 +63,46 @@ public class WebSocketBotEchoTest {
     }
 
     @Test
-    public void echoTest(TestContext context) {
-        /*
+    public void botEchoNothing(TestContext context) {
         final Async async = context.async();
 
-        // TODO: Do one test class per bot!
+        JsonObject req = testClient.getGenericMessage(USERNAME_ALICE, "@echobot");
+        req.put("value", "");
 
-        MultiMap headers = new CaseInsensitiveHeaders();
-        headers.add(COOKIE, cookies.get());
+        JsonObject response = new JsonObject()
+                .put("type", "msg")
+                .put("to", USERNAME_ALICE)
+                .put("value", "")
+                .put("id", "@echobot::2016.10.10.12.00.00.000")
+                .put("username", "@echobot");
 
-        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
-            ws.handler(buffer -> {
-                JsonObject message = new JsonObject(buffer.toString());
+        testClient.send(context, client, USERNAME_ALICE, req, response, done -> {
+            context.assertNotNull(testSetup.getConversationsStore().get(USERNAME_ALICE, "@echobot"));
+            context.assertEquals(2, testSetup.getConversationsStore().get(USERNAME_ALICE, "@echobot").toJson().size());
 
-                context.assertTrue(message.containsKey("type"));
-                context.assertEquals("pong", message.getString("type"));
-
-                ws.close();
-
-                async.complete();
-            });
-
-            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\", \"token\": \"" + token + "\" }"));
+            async.complete();
         });
-        */
+    }
+
+    @Test
+    public void botEchoSomething(TestContext context) {
+        final Async async = context.async();
+
+        JsonObject req = testClient.getGenericMessage(USERNAME_ALICE, "@echobot");
+        req.put("value", "Something!");
+
+        JsonObject response = new JsonObject()
+                .put("type", "msg")
+                .put("to", USERNAME_ALICE)
+                .put("value", "Something!")
+                .put("id", "@echobot::2016.10.10.12.00.00.000")
+                .put("username", "@echobot");
+
+        testClient.send(context, client, USERNAME_ALICE, req, response, done -> {
+            context.assertNotNull(testSetup.getConversationsStore().get(USERNAME_ALICE, "@echobot"));
+            context.assertEquals(2, testSetup.getConversationsStore().get(USERNAME_ALICE, "@echobot").toJson().size());
+
+            async.complete();
+        });
     }
 }

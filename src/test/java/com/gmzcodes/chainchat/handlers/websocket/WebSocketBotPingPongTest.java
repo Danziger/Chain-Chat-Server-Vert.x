@@ -3,6 +3,10 @@ package com.gmzcodes.chainchat.handlers.websocket;
 import static com.gmzcodes.chainchat.constants.ExpectedValues.PASS_ALICE;
 import static com.gmzcodes.chainchat.constants.ExpectedValues.USERNAME_ALICE;
 import static com.gmzcodes.chainchat.utils.JsonAssert.assertJsonEquals;
+import static org.junit.Assert.assertEquals;
+
+import java.math.BigInteger;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.After;
 import org.junit.Before;
@@ -13,15 +17,18 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import com.gmzcodes.chainchat.PhilTheServer;
+import com.gmzcodes.chainchat.bots.PingPongBot;
 import com.gmzcodes.chainchat.constants.ExpectedValues;
 import com.gmzcodes.chainchat.utils.TestClient;
 import com.gmzcodes.chainchat.utils.TestSetupEndToEnd;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import junit.framework.TestCase;
 
 /**
  * Created by danigamez on 09/12/2016.
@@ -62,29 +69,68 @@ public class WebSocketBotPingPongTest {
     }
 
     @Test
-    public void pingPongTest(TestContext context) {
-        /*
+    public void botPingPongNothing(TestContext context) {
         final Async async = context.async();
 
-        // TODO: Do one test class per bot!
+        JsonObject req = testClient.getGenericMessage(USERNAME_ALICE, "@pingpongbot");
+        req.put("value", "");
 
-        MultiMap headers = new CaseInsensitiveHeaders();
-        headers.add(COOKIE, cookies.get());
+        JsonObject response = new JsonObject()
+                .put("type", "msg")
+                .put("to", USERNAME_ALICE)
+                .put("value", "Ping?")
+                .put("id", "@pingpongbot::2016.10.10.12.00.00.000")
+                .put("username", "@pingpongbot");
 
-        HttpClient httpClient = client.websocket(PORT, "localhost", "/eventbus", headers, ws -> {
-            ws.handler(buffer -> {
-                JsonObject message = new JsonObject(buffer.toString());
+        testClient.send(context, client, USERNAME_ALICE, req, response, done -> {
+            context.assertNotNull(testSetup.getConversationsStore().get(USERNAME_ALICE, "@pingpongbot"));
+            assertEquals(2, testSetup.getConversationsStore().get(USERNAME_ALICE, "@pingpongbot").toJson().size());
 
-                context.assertTrue(message.containsKey("type"));
-                context.assertEquals("pong", message.getString("type"));
-
-                ws.close();
-
-                async.complete();
-            });
-
-            ws.write(Buffer.buffer("{ \"type\": \"ping\", \"username\": \"alice\", \"token\": \"" + token + "\" }"));
+            async.complete();
         });
-        */
+    }
+
+    @Test
+    public void botPingPongRandomSomething(TestContext context) {
+        final Async async = context.async();
+
+        JsonObject req = testClient.getGenericMessage(USERNAME_ALICE, "@pingpongbot");
+        req.put("value", "Something!");
+
+        JsonObject response = new JsonObject()
+                .put("type", "msg")
+                .put("to", USERNAME_ALICE)
+                .put("value", "Ping?")
+                .put("id", "@pingpongbot::2016.10.10.12.00.00.000")
+                .put("username", "@pingpongbot");
+
+        testClient.send(context, client, USERNAME_ALICE, req, response, done -> {
+            context.assertNotNull(testSetup.getConversationsStore().get(USERNAME_ALICE, "@pingpongbot"));
+            context.assertEquals(2, testSetup.getConversationsStore().get(USERNAME_ALICE, "@pingpongbot").toJson().size());
+
+            async.complete();
+        });
+    }
+
+    @Test
+    public void botPingPongOk(TestContext context) {
+        final Async async = context.async();
+
+        JsonObject req = testClient.getGenericMessage(USERNAME_ALICE, "@pingpongbot");
+        req.put("value", "Ping");
+
+        JsonObject response = new JsonObject()
+                .put("type", "msg")
+                .put("to", USERNAME_ALICE)
+                .put("value", "Pong!")
+                .put("id", "@pingpongbot::2016.10.10.12.00.00.000")
+                .put("username", "@pingpongbot");
+
+        testClient.send(context, client, USERNAME_ALICE, req, response, done -> {
+            context.assertNotNull(testSetup.getConversationsStore().get(USERNAME_ALICE, "@pingpongbot"));
+            context.assertEquals(2, testSetup.getConversationsStore().get(USERNAME_ALICE, "@pingpongbot").toJson().size());
+
+            async.complete();
+        });
     }
 }

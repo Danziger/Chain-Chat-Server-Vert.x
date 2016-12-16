@@ -43,7 +43,7 @@ public final class JsonAssert {
 
                 assertJsonEquals(context, message, (JsonArray) value, current.getJsonArray(key), strict);
             } else if (value instanceof String) {
-                if (((String) value).charAt(0) == '@') {
+                if (((String) value).length() > 0 && ((String) value).charAt(0) == '@') {
                     switch ((String) value) {
                         case "@PRESENT":
                             // TODO: Implement! Not null?
@@ -51,7 +51,9 @@ public final class JsonAssert {
                             break;
 
                         default:
-                            context.assertTrue(false);
+                            assertTrue(current.getMap().get(key) instanceof String);
+
+                            context.assertEquals(value, current.getString(key));
                     }
                 } else {
                     assertTrue(current.getMap().get(key) instanceof String);
@@ -100,14 +102,16 @@ public final class JsonAssert {
 
                 assertJsonEquals(context, message, (JsonArray) entry, current.getJsonArray(index), strict);
             } else if (entry instanceof String) {
-                if (((String) entry).charAt(0) == '@') {
+                if (((String) entry).length() > 0 && ((String) entry).charAt(0) == '@') {
                     switch ((String) entry) {
                         case "@PRESENT":
                             context.assertTrue(true);
                             break;
 
                         default:
-                            context.assertTrue(false);
+                            context.assertTrue(current.getList().get(index) instanceof String);
+
+                            context.assertEquals(entry, current.getString(index));
                     }
                 } else {
                     context.assertTrue(current.getList().get(index) instanceof String);

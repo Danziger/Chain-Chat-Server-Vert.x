@@ -131,7 +131,7 @@ public class ConversationStoreTest {
         assertEquals(0, conversationsByUser.size());
         assertEquals(0, conversationsById.size());
 
-        // ACTION: Get non existing conversation for user1 and user2
+        // ACTION: Get non existing conversation for user1:
 
         Conversation conversationUser1 = conversationsStore.get("user1");
 
@@ -162,5 +162,103 @@ public class ConversationStoreTest {
 
         assertEquals(1, conversationsById.size());
         assertEquals(conversationUser1, conversationsById.get("user1"));
+    }
+
+    @Test
+    public void getNonExistingGroupConversationFromExistingIndividualUsersAndCheckJSONTest() {
+        final ConversationsStore conversationsStore = new ConversationsStore();
+        final HashMap<String, List<Conversation>> conversationsByUser
+                = (HashMap<String, List<Conversation>>) Whitebox.getInternalState(conversationsStore, "conversationsByUser");
+        final HashMap<String, Conversation> conversationsById
+                = (HashMap<String, Conversation>) Whitebox.getInternalState(conversationsStore, "conversationsById");
+
+        // PRE:
+
+        assertEquals(0, conversationsByUser.size());
+        assertEquals(0, conversationsById.size());
+
+        // ACTION: Get non existing conversation for user1 and user2
+
+        Conversation conversationUser1 = conversationsStore.get("user1");
+        Conversation conversationUser2 = conversationsStore.get("user2");
+
+        JsonObject conversationsJsonUser1 = conversationsStore.getJson("user1");
+        JsonObject conversationsJsonUser2 = conversationsStore.getJson("user2");
+
+        // RESULTS:
+
+        assertNotNull(conversationUser1);
+        assertEquals("user1", conversationUser1.getRoomId());
+
+        assertNotNull(conversationsJsonUser1);
+        assertEquals(1, conversationsJsonUser1.size());
+        assertNotNull(conversationsJsonUser1.getJsonArray("user1"));
+        assertEquals(0, conversationsJsonUser1.getJsonArray("user1").size());
+
+        JsonObject expectedUser1JSON = new JsonObject()
+                .put("user1", new JsonArray());
+
+        assertNotNull(conversationUser2);
+        assertEquals("user2", conversationUser2.getRoomId());
+
+        assertNotNull(conversationsJsonUser2);
+        assertEquals(1, conversationsJsonUser2.size());
+        assertNotNull(conversationsJsonUser2.getJsonArray("user2"));
+        assertEquals(0, conversationsJsonUser2.getJsonArray("user2").size());
+
+        JsonObject expectedUser2JSON = new JsonObject()
+                .put("user2", new JsonArray());
+
+        assertJsonEquals(expectedUser2JSON, conversationsJsonUser2);
+
+        // This next part could be removed, assertJsonEquals is supposed to do that already (TODO: Add strict mode):
+
+        // POST/PRE:
+
+        assertEquals(2, conversationsByUser.size());
+        assertEquals(1, conversationsByUser.get("user1").size());
+        assertEquals(1, conversationsByUser.get("user2").size());
+        assertEquals(conversationUser1, conversationsByUser.get("user1").get(0));
+        assertEquals(conversationUser2, conversationsByUser.get("user2").get(0));
+
+        assertEquals(2, conversationsById.size());
+        assertEquals(conversationUser1, conversationsById.get("user1"));
+        assertEquals(conversationUser2, conversationsById.get("user2"));
+
+        // ACTION: Get non existing conversation for user1 and user2
+
+        Conversation conversationUser1User2 = conversationsStore.get("user1", "user2");
+        Conversation conversationUser2User1 = conversationsStore.get("user2", "user1");
+
+        JsonObject groupConversationsJsonUser1 = conversationsStore.getJson("user1");
+        JsonObject groupConversationsJsonUser2 = conversationsStore.getJson("user2");
+
+        // RESULTS:
+
+        assertNotNull(conversationUser1User2);
+        assertNotNull(conversationUser2User1);
+        assertEquals(conversationUser1User2, conversationUser2User1);
+        assertEquals("user1::user2", conversationUser1User2.getRoomId());
+        assertEquals("user1::user2", conversationUser2User1.getRoomId());
+
+        JsonObject expectedGroupUser1JSON = new JsonObject()
+                .put("user2", new JsonArray());
+
+        JsonObject expectedGroupUser2JSON = new JsonObject()
+                .put("user1", new JsonArray());
+
+        assertJsonEquals(expectedGroupUser1JSON, groupConversationsJsonUser1);
+        assertJsonEquals(expectedGroupUser2JSON, groupConversationsJsonUser2);
+
+        // POST:
+
+        assertEquals(2, conversationsByUser.size());
+        assertEquals(2, conversationsByUser.get("user1").size());
+        assertEquals(2, conversationsByUser.get("user2").size());
+        assertEquals(conversationUser1User2, conversationsByUser.get("user1").get(1));
+        assertEquals(conversationUser2User1, conversationsByUser.get("user2").get(1));
+
+        assertEquals(3, conversationsById.size());
+        assertEquals(conversationUser1User2, conversationsById.get("user1::user2"));
     }
 }

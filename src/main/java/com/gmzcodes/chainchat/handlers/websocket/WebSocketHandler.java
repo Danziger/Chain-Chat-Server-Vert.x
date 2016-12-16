@@ -7,6 +7,7 @@ import com.gmzcodes.chainchat.store.*;
 
 import io.vertx.core.Handler;
 import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.WebSocket;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -89,6 +90,8 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
 
                 // TODO: Check that "to" matches username
 
+                // TODO: Check null conditions too!
+
                 if (token.isEmpty()) { // 2
                     ws.writeFinalTextFrame(MISSING_TOKEN.toString());
 
@@ -153,17 +156,9 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
                     case "msg":
                         // TODO: Test with conversations in store (add that test data).
 
-                        // TODO: Test offline user messages go to the store.
-
-                        // TODO: add server ack in message
-
-                        // TODO: Send ACK_SERVER
-
                         // TODO: Replay message to other instances (including ACK)
 
                         // TODO: Store message (including ACK)
-
-                        // TODO: Forward to destination
 
                         // TODO: Should send to multiple to's (group or multiple instances) and replay to multiple from's!
 
@@ -175,27 +170,65 @@ public class WebSocketHandler implements Handler<ServerWebSocket> {
                         if (isBot) {
                             // ACK ACK should go in same message!
 
-                            response = botsStore.get(to).talk(message);
+                            response = conversationsStore.get(from, to)
+                                .putMessage(new JsonObject()
+                                        .put("type", "msg")
+                                        .put("username", to)
+                                        .put("to", from)
+                                        .put("timestamp", message.getString("timestamp"))
+                                        .put("value", botsStore.get(to).talk(from, message.getString("value")))
+                                );
 
+                            // TODO: Respond to multiple clients
+
+                            ws.writeFinalTextFrame(response.toString());
                         } else {
                             response = new JsonObject()
                                     .put("type", "stored")
                                     .put("value", message.getString("id"));
+
+                            ws.writeFinalTextFrame(response.toString());
+
+                            for (ServerWebSocket webSocket : webSocketsStore.get(to)) {
+                                webSocket.writeFinalTextFrame(message.toString());
+
+                                // TODO: Test multiple clients
+                            }
                         }
 
                         break;
 
                     case "ack":
+                        // TODO: Check store is updated!
 
-                    case "read":
+                        response = new JsonObject()
+                                .put("type", "ack")
+                                .put("from", username)
+                                .put("value", message.getString("value"));
+
+                        for (ServerWebSocket webSocket : webSocketsStore.get(to)) {
+                            webSocket.writeFinalTextFrame(response.toString());
+                        }
+
+                        break;
+
+                    case "seen":
+                        // TODO: Check store is updated!
+
+                        response = new JsonObject()
+                                .put("type", "seen")
+                                .put("from", username)
+                                .put("value", message.getString("value"));
+
+                        for (ServerWebSocket webSocket : webSocketsStore.get(to)) {
+                            webSocket.writeFinalTextFrame(response.toString());
+                        }
+
+                        break;
 
                     default:
                         ws.writeFinalTextFrame(INVALID_MESSAGE_TYPE.toString());
-
-                        return;
                 }
-
-                ws.writeFinalTextFrame(response.toString());
             });
 
             ws.closeHandler(done -> webSocketsStore.remove(username, ws));
